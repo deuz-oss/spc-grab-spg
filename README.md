@@ -14,7 +14,7 @@ loop: **request → schedule → geotag clock-in → KPI → server checks → P
 | Spec approval | 10–12 Oct | ✅ approved 9 Oct |
 | Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 53 smoke checks pass on Postgres 16 |
 | Foundation: app scaffold | 13–17 Oct | ✅ login, SPG today (selfie clock-in, KPI, clock-out, offline queue), PIC/Grab today (exception queue, validation), profile — tsc, lint, 56 unit tests, web bundle green |
-| Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9 Oct | 🟡 0001, 0002, 0004, 0005 applied; 0003 (jobs) pending; no seed data yet |
+| Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9 Oct | 🟡 all migrations applied except the retention purge (part of 0003; the connector refuses SQL containing DELETE, so it is pasted in the SQL Editor). 3 of 4 cron jobs live. Demo data from `supabase/seed/staging_demo.sql` (6 accounts, one per role) |
 | Foundation: Android dev build on a real phone | 13–17 Oct | ⬜ needs EAS project |
 | Core loop screens | 19–24 Oct | ⬜ |
 | Reports, payroll export, pilot (5 SPG) | 26–30 Oct | ⬜ |
