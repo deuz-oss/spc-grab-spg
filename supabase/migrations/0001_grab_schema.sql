@@ -69,7 +69,7 @@ create table public.profiles (
                     ('super_admin','pic','back_office','coordinator','spg','grab_viewer')),
   city_id         text references public.cities(id),
   active          boolean not null default false,
-  -- SPG-only fields (null for other roles)
+  -- Field-worker fields: SPG and city coordinators (senior SPG who also work shifts)
   grade           text check (grade in ('A','B','C')),
   contract_type   text check (contract_type in ('daily_worker','pkwt')),
   documents_ok    boolean not null default false,  -- KTP, diploma, references checked
@@ -78,7 +78,7 @@ create table public.profiles (
   consent_version text,
   consent_at      timestamptz,
   created_at      timestamptz not null default now(),
-  constraint spg_fields_only_for_spg check (role = 'spg' or (grade is null and contract_type is null))
+  constraint field_fields_only_for_field check (role in ('spg','coordinator') or (grade is null and contract_type is null))
 );
 create index profiles_city_idx on public.profiles(city_id);
 
@@ -103,6 +103,9 @@ language sql stable as $$ select coalesce(public.current_role() in ('super_admin
 
 create or replace function public.is_staff() returns boolean        -- SPC office staff
 language sql stable as $$ select coalesce(public.current_role() in ('super_admin','pic','back_office'), false) $$;
+
+create or replace function public.is_field() returns boolean       -- works shifts: SPG and coordinators
+language sql stable as $$ select coalesce(public.current_role() in ('spg','coordinator'), false) $$;
 
 create or replace function public.can_monitor() returns boolean     -- reads program-wide data
 language sql stable as $$ select coalesce(public.current_role() in ('super_admin','pic','back_office','grab_viewer'), false) $$;
@@ -227,7 +230,7 @@ begin
   new.overtime_hours := greatest(r.shift_hours - 8, 0);
   if tg_op = 'INSERT' or new.spg_id is distinct from old.spg_id then
     select * into p from public.profiles where id = new.spg_id;
-    if p.role <> 'spg' or not p.active then raise exception 'Hanya SPG aktif yang bisa dijadwalkan.'; end if;
+    if p.role not in ('spg','coordinator') or not p.active then raise exception 'Hanya SPG/koordinator aktif yang bisa dijadwalkan.'; end if;
     if public.grade_rank(p.grade) < public.grade_rank(r.grade) then
       raise exception 'Grade SPG (%) di bawah grade request (%).', p.grade, r.grade;
     end if;
@@ -607,7 +610,7 @@ begin
     if (new.role, new.active, new.username) is distinct from (old.role, old.active, old.username) then
       raise exception 'Role, status dan username hanya bisa diubah super admin.';
     end if;
-    if auth.uid() = new.id and public.current_role() = 'spg'
+    if auth.uid() = new.id and public.is_field()
        and (new.grade, new.contract_type, new.documents_ok, new.phone_ok, new.bpjs_registered, new.city_id)
            is distinct from
            (old.grade, old.contract_type, old.documents_ok, old.phone_ok, old.bpjs_registered, old.city_id) then
@@ -720,7 +723,7 @@ create policy shifts_write on public.shifts for insert with check (public.is_ops
 create policy shifts_update on public.shifts for update using (public.is_ops()) with check (public.is_ops());
 
 create policy att_read on public.attendances for select using (public.shift_visible(shift_id));
-create policy att_insert on public.attendances for insert with check (user_id = auth.uid() and public.current_role() = 'spg');
+create policy att_insert on public.attendances for insert with check (user_id = auth.uid() and public.is_field());
 create policy att_update on public.attendances for update using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 create policy media_read on public.attendance_media for select using (
@@ -737,7 +740,7 @@ create policy route_insert on public.route_points for insert with check (
   user_id = auth.uid() and exists (select 1 from public.attendances a where a.id = attendance_id and a.user_id = auth.uid()));
 
 create policy kpi_read on public.kpi_logs for select using (public.shift_visible(shift_id));
-create policy kpi_insert on public.kpi_logs for insert with check (spg_id = auth.uid() and public.current_role() = 'spg');
+create policy kpi_insert on public.kpi_logs for insert with check (spg_id = auth.uid() and public.is_field());
 
 create policy exc_read on public.exceptions for select using (public.shift_visible(shift_id));
 create policy repl_read on public.replacements for select using (public.can_monitor());

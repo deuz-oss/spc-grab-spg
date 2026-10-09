@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "SPC Grab SPG",
+    "slug": "spc-grab-spg",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "spcgrabspg",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.spc.grabspg",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Lokasi dipakai untuk clock-in di venue dan peta live selama shift.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Lokasi dipakai untuk clock-in di venue dan peta live selama shift.",
+        "NSCameraUsageDescription": "Kamera dipakai untuk selfie absensi dan foto bukti KPI.",
+        "UIBackgroundModes": [
+          "location"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.spc.grabspg",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B1B3A",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.CAMERA"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Lokasi dipakai untuk clock-in di venue dan peta live selama shift.",
+          "locationAlwaysAndWhenInUsePermission": "Lokasi dipakai untuk clock-in di venue dan peta live selama shift.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isIosBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Kamera dipakai untuk selfie absensi dan foto bukti KPI.",
+          "photosPermission": false
+        }
+      ]
+    ]
+  }
+}

@@ -12,8 +12,9 @@ loop: **request → schedule → geotag clock-in → KPI → server checks → P
 | Phase (spec) | Dates | State |
 |---|---|---|
 | Spec approval | 10–12 Oct | ✅ approved 9 Oct |
-| Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 48 smoke checks pass on Postgres 16 |
-| Foundation: app scaffold + Android dev build | 13–17 Oct | ⬜ next |
+| Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 50 smoke checks pass on Postgres 16 |
+| Foundation: app scaffold | 13–17 Oct | ✅ login, SPG today (selfie clock-in, KPI, clock-out, offline queue), PIC/Grab today (exception queue, validation), profile — tsc, lint, 56 unit tests, web bundle green |
+| Foundation: Android dev build on a real phone | 13–17 Oct | ⬜ needs EAS project + Supabase staging |
 | Core loop screens | 19–24 Oct | ⬜ |
 | Reports, payroll export, pilot (5 SPG) | 26–30 Oct | ⬜ |
 | Go-live: first Grab request | 2 Nov | ⬜ |
@@ -27,6 +28,7 @@ Migrations in `supabase/migrations/`, applied in filename order to a Supabase pr
 | `0001_grab_schema.sql` | 6 roles, cities, venues, campaigns, requests (SLA hiring), trainings, shifts (grade + training gates, overtime split), attendances (server geofence, lateness, immutable clock-in), selfies split out, route points, KPI logs (template + proof rules), exceptions, replacements (SLA), validation, billable view, daily report, live map, audit log, RLS |
 | `0002_storage.sql` | Private `selfies` and `kpi-proof` buckets; Grab never reads selfies. Supabase-only |
 | `0003_scheduled_jobs.sql` | Auto-close >16 h sessions, 12-month retention purge, pg_cron: no-shows every 5 min, daily report 06:00 WIB, hourly auto-close, nightly retention |
+| `0004_client_errors.sql` | Crash log for the app when Sentry is off (from the reference repo) |
 
 Rules that live in the database, not the phone:
 
@@ -47,9 +49,36 @@ Spins up a throwaway Postgres (needs PostgreSQL 15+ server binaries), applies th
 schema, every migration except storage, and runs `supabase/tests/10_smoke.sql`. The run stops at the first
 failed check. CI runs the same script on every push.
 
+## App (Expo — Android, iOS, web from one codebase)
+
+```bash
+cp .env.example .env      # fill in the Supabase URL and anon key
+npm install
+npx expo start            # w = web; Android/iOS background GPS needs a dev client (npm run build:dev)
+```
+
+| Role | Tab "Hari Ini" |
+|---|---|
+| SPG / coordinator | Today's shifts → clock-in with front-camera selfie and a geofence preview → KPI per campaign field (camera proof when required, no customer data) → clock-out. Works without signal: writes queue in order and photos upload at replay. Background GPS runs while a shift is open |
+| PIC / super admin | Today's numbers, open exceptions with a required note to resolve or waive, finished shifts ready to validate |
+| Back office / Grab | Same view, read-only |
+
+Reused unchanged from `spc-nc-workforce`: UI kit, dialogs, theme, offline replay rules, route buffer and sync, background
+location task, tracking watcher, offline snapshot, error reporting. Rewritten for Grab: types, store, mappers,
+storage (private `selfies` / `kpi-proof` buckets), geofence helper, screens.
+
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (56 unit tests), `npm run test:db` (50 database checks).
+CI runs all of them plus Expo doctor and a web bundle on every push.
+
+Not yet built (Core loop, 19–24 Oct): request entry and shift scheduling screens, live map, SPG consent screen,
+daily report view and export, account provisioning (`admin-users` edge function).
+
 ## Open items (from the spec)
 
 - Edge functions to port: `admin-users` (account provisioning), new `purge-media` (deletes objects in `media_purge_queue`).
 - KPI outlier rule (P2), billing lines per month (P2), Grab self-service request form (P2).
 - Inherited from the reference: iOS background location unvalidated, EAS production build never run, push unverified,
   map tiles must move to a keyed provider before go-live.
+- `assets/` still holds the reference repo's placeholder icons (gold "NC" badge). Replace with SPC / programme artwork
+  before any build is shown to Grab or installed by SPG — same filenames and sizes.
+- `src/lib/database.types.ts` is not generated yet (needs the staging project); the Supabase client is untyped until then.

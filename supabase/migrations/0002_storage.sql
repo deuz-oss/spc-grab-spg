@@ -11,12 +11,12 @@ on conflict (id) do update set public = false;
 
 create policy selfies_insert on storage.objects for insert to authenticated
   with check (bucket_id = 'selfies' and (storage.foldername(name))[1] = auth.uid()::text
-              and public.current_role() = 'spg');
+              and public.is_field());
 create policy selfies_read on storage.objects for select to authenticated
   using (bucket_id = 'selfies' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_staff()));
 
 create policy proof_insert on storage.objects for insert to authenticated
   with check (bucket_id = 'kpi-proof' and (storage.foldername(name))[1] = auth.uid()::text
-              and public.current_role() = 'spg');
+              and public.is_field());
 create policy proof_read on storage.objects for select to authenticated
   using (bucket_id = 'kpi-proof' and ((storage.foldername(name))[1] = auth.uid()::text or public.can_monitor()));

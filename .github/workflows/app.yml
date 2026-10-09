@@ -1,0 +1,37 @@
+name: App
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Types, lint, unit tests, Expo doctor, web bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npx eslint .
+      - name: Unit tests
+        run: npm test
+      - name: Expo doctor
+        run: npx expo-doctor
+      # Proves Metro can resolve and bundle every import. Dummy Supabase values: never contacted.
+      - name: Web bundle
+        run: npx expo export --platform web --output-dir dist-ci
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder

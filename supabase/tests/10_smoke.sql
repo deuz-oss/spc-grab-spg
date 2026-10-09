@@ -228,6 +228,26 @@ select tests.ok((select (totals->'kpi'->>'downloads')::int = 12 and (totals->>'n
                 'published report: KPI totals and no-shows visible to Grab');
 reset role;
 
+-- ---------------------------------------------------------------- coordinators work shifts too (senior SPG)
+select tests.as_user(null);
+update public.profiles set grade = 'A', contract_type = 'daily_worker' where username = 'coord';
+insert into public.trainings (id, spg_id, campaign_id, score) values ('tr_c', '00000000-0000-0000-0000-0000000000d1', 'c_food', 95);
+select tests.as_user('00000000-0000-0000-0000-0000000000b1');
+set role authenticated;
+insert into public.shifts (id, request_id, venue_id, spg_id, shift_date, planned_start, planned_end)
+  select 's_coord', 'r1', 'v_tp', '00000000-0000-0000-0000-0000000000d1', d, start_late, '23:59' from t_clock;
+reset role;
+select tests.as_user('00000000-0000-0000-0000-0000000000d1');
+set role authenticated;
+insert into public.attendances (id, shift_id, user_id, clock_in_at, clock_in_lat, clock_in_lng)
+  values ('a_coord', 's_coord', '00000000-0000-0000-0000-0000000000d1', now(), -7.2625, 112.7389);
+insert into public.kpi_logs (id, shift_id, spg_id, field_key, value, logged_at)
+  values ('k_coord', 's_coord', '00000000-0000-0000-0000-0000000000d1', 'contacts', 5, now());
+select tests.ok((select geo_valid from public.attendances where id = 'a_coord'), 'coordinator is scheduled, clocks in at the venue and logs KPI');
+select tests.fails($$update public.profiles set grade = 'C' where id = '00000000-0000-0000-0000-0000000000d1'$$,
+                   'back office', 'coordinator cannot change own grade');
+reset role;
+
 -- ---------------------------------------------------------------- auto-close and retention (service context)
 select tests.as_user(null);
 insert into public.requests (id, campaign_id, city_id, venue_id, grade, headcount, start_date, end_date, shift_hours, package)
