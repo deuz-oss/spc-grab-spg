@@ -1,4 +1,3 @@
-/* eslint-env node */
 import { Buffer } from "node:buffer";
 // UI smoke test of the web build against a mocked Supabase API (no real backend needed).
 //   npx expo export --platform web --output-dir dist && python3 -m http.server 8765 -d dist &
