@@ -1,0 +1,21 @@
+name: Database
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  migrations-and-rls:
+    name: Migrations + RLS smoke test (Postgres 16)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install PostgreSQL 16 server
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-16
+          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+      - name: Apply migrations and run smoke test
+        run: ./scripts/test-db.sh
