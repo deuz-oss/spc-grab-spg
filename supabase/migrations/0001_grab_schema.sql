@@ -752,6 +752,8 @@ create policy reports_read on public.daily_reports for select using (
 create policy audit_read on public.admin_audit_log for select using (public.current_role() in ('super_admin','pic'));
 
 -- RPCs callable by signed-in users (each checks the caller's role itself)
-revoke execute on function public.detect_no_shows() from public;
-revoke execute on function public.build_daily_report(date) from public;
-revoke execute on function public.raise_exception_row(text, text, text) from public;
+-- Internal jobs: never callable through the API. Supabase grants anon/authenticated execute on new
+-- functions by default, so revoking from public alone is not enough.
+revoke execute on function public.detect_no_shows() from public, anon, authenticated;
+revoke execute on function public.build_daily_report(date) from public, anon, authenticated;
+revoke execute on function public.raise_exception_row(text, text, text) from public, anon, authenticated;

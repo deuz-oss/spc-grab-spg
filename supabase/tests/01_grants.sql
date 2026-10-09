@@ -1,9 +1,7 @@
--- Supabase grants table/function access to these roles by default; RLS does the scoping.
+-- Mimic Supabase's default privileges BEFORE the migrations run: every new table, sequence and
+-- function in public is granted to anon, authenticated and service_role. RLS and the migrations'
+-- own revokes then do the scoping, exactly as on a real project.
 grant usage on schema public to anon, authenticated, service_role;
-grant all on all tables in schema public to authenticated, service_role;
-grant all on all sequences in schema public to authenticated, service_role;
-grant execute on all functions in schema public to authenticated, service_role;
--- re-apply the migration's intent: internal jobs are not callable by end users
-revoke execute on function public.detect_no_shows() from authenticated;
-revoke execute on function public.build_daily_report(date) from authenticated;
-revoke execute on function public.raise_exception_row(text, text, text) from authenticated;
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;

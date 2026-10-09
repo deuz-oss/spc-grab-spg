@@ -4,7 +4,7 @@
 set client_min_messages = notice;
 
 create schema tests;
-grant usage on schema tests to authenticated;
+grant usage on schema tests to authenticated, anon;
 
 create function tests.as_user(p uuid) returns void language sql as $$
   select set_config('request.jwt.claim.sub', coalesce(p::text, ''), false)
@@ -26,7 +26,7 @@ begin
 end $$;
 create function tests.count_rows(q text) returns bigint language plpgsql as $$
 declare n bigint; begin execute 'select count(*) from (' || q || ') x' into n; return n; end $$;
-grant execute on all functions in schema tests to authenticated;
+grant execute on all functions in schema tests to authenticated, anon;
 
 -- ---------------------------------------------------------------- fixtures (service context)
 insert into auth.users (id, email, raw_user_meta_data) values
@@ -138,6 +138,11 @@ select tests.fails($$update public.profiles set grade = 'A' where id = '00000000
                    'back office', 'SPG cannot change own grade');
 select tests.fails($$select public.resolve_exception((select id from public.exceptions limit 1), 'waived', 'x')$$,
                    'Hanya PIC', 'SPG cannot resolve exceptions');
+select tests.fails($$select public.raise_exception_row('s1', 'late', 'forged')$$, 'permission denied', 'SPG cannot call internal jobs');
+select tests.fails($$select public.requests_server_fill()$$, 'permission denied', 'trigger functions are not callable over the API');
+reset role;
+set role anon;
+select tests.fails($$select public.validate_shift('s1')$$, 'permission denied', 'signed-out caller cannot call any RPC');
 reset role;
 
 -- ---------------------------------------------------------------- visibility per role

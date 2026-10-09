@@ -54,8 +54,8 @@ begin
 end;
 $$;
 
-revoke execute on function public.auto_close_attendances() from public;
-revoke execute on function public.purge_expired_personal_data() from public;
+revoke execute on function public.auto_close_attendances() from public, anon, authenticated;
+revoke execute on function public.purge_expired_personal_data() from public, anon, authenticated;
 
 -- Schedule (UTC cron; WIB = UTC+7). Skipped quietly where pg_cron is not installed.
 do $$

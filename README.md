@@ -12,9 +12,10 @@ loop: **request → schedule → geotag clock-in → KPI → server checks → P
 | Phase (spec) | Dates | State |
 |---|---|---|
 | Spec approval | 10–12 Oct | ✅ approved 9 Oct |
-| Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 50 smoke checks pass on Postgres 16 |
+| Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 53 smoke checks pass on Postgres 16 |
 | Foundation: app scaffold | 13–17 Oct | ✅ login, SPG today (selfie clock-in, KPI, clock-out, offline queue), PIC/Grab today (exception queue, validation), profile — tsc, lint, 56 unit tests, web bundle green |
-| Foundation: Android dev build on a real phone | 13–17 Oct | ⬜ needs EAS project + Supabase staging |
+| Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9 Oct | 🟡 0001, 0002, 0004, 0005 applied; 0003 (jobs) pending; no seed data yet |
+| Foundation: Android dev build on a real phone | 13–17 Oct | ⬜ needs EAS project |
 | Core loop screens | 19–24 Oct | ⬜ |
 | Reports, payroll export, pilot (5 SPG) | 26–30 Oct | ⬜ |
 | Go-live: first Grab request | 2 Nov | ⬜ |
@@ -29,6 +30,7 @@ Migrations in `supabase/migrations/`, applied in filename order to a Supabase pr
 | `0002_storage.sql` | Private `selfies` and `kpi-proof` buckets; Grab never reads selfies. Supabase-only |
 | `0003_scheduled_jobs.sql` | Auto-close >16 h sessions, 12-month retention purge, pg_cron: no-shows every 5 min, daily report 06:00 WIB, hourly auto-close, nightly retention |
 | `0004_client_errors.sql` | Crash log for the app when Sentry is off (from the reference repo) |
+| `0005_hardening.sql` | From the Supabase security advisor: signed-out callers execute no function, trigger functions are not callable over the API, fixed `search_path` everywhere |
 
 Rules that live in the database, not the phone:
 
@@ -67,7 +69,7 @@ Reused unchanged from `spc-nc-workforce`: UI kit, dialogs, theme, offline replay
 location task, tracking watcher, offline snapshot, error reporting. Rewritten for Grab: types, store, mappers,
 storage (private `selfies` / `kpi-proof` buckets), geofence helper, screens.
 
-Checks: `npm run typecheck`, `npm run lint`, `npm test` (56 unit tests), `npm run test:db` (50 database checks).
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (56 unit tests), `npm run test:db` (53 database checks).
 CI runs all of them plus Expo doctor and a web bundle on every push.
 
 Not yet built (Core loop, 19–24 Oct): request entry and shift scheduling screens, live map, SPG consent screen,

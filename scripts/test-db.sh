@@ -17,10 +17,10 @@ $RUNAS "$PGBIN/pg_ctl" -D "$WORK/data" -o "-p $PORT -k $WORK -c listen_addresses
 
 PSQL=(psql -h "$WORK" -p "$PORT" -U postgres -d postgres -X -q -t -A -v ON_ERROR_STOP=1)
 "${PSQL[@]}" -f "$ROOT/supabase/tests/00_supabase_stub.sql"
+"${PSQL[@]}" -f "$ROOT/supabase/tests/01_grants.sql"
 for f in "$ROOT"/supabase/migrations/*.sql; do
   case "$(basename "$f")" in *_storage.sql) echo "skip (Supabase-only): $(basename "$f")"; continue;; esac
   echo "apply: $(basename "$f")"
   "${PSQL[@]}" -f "$f"
 done
-"${PSQL[@]}" -f "$ROOT/supabase/tests/01_grants.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/tests/10_smoke.sql" 2>&1 | grep -E "pass:|FAIL|ERROR|PASSED|apply|skip" | sed "s/^psql:[^:]*:[0-9]*: NOTICE:  /  /"
