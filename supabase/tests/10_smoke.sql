@@ -56,6 +56,7 @@ update public.profiles set active = true, role = 'spg', grade = 'C', contract_ty
 update public.profiles set active = true, role = 'spg', grade = 'A', contract_type = 'daily_worker', city_id = 'kota-surabaya' where username = 'spg3';
 update public.profiles set active = true, role = 'grab_viewer' where username = 'grab';
 insert into public.profile_contacts values ('00000000-0000-0000-0000-0000000000e1', '081200000001');
+update public.profiles set consent_version = 'test-v1' where username in ('coord', 'spg3');
 
 insert into public.venues (id, city_id, name, lat, lng, radius_m) values
   ('v_tp', 'kota-surabaya', 'Tunjungan Plaza', -7.2625, 112.7389, 150),
@@ -106,11 +107,20 @@ insert into public.shifts (id, request_id, venue_id, spg_id, shift_date, planned
 insert into public.shifts (id, request_id, venue_id, spg_id, shift_date, planned_start, planned_end)
   select 's3', 'r1', 'v_tp', '00000000-0000-0000-0000-0000000000e3', d, start_noshow, '23:59' from t_clock;
 select tests.ok((select overtime_hours from public.shifts where id = 's1') = 2, '10-hour shift = 2 overtime hours');
+select tests.ok((select status = 'running' and staffed_at is null from public.requests where id = 'r1'),
+                'request with shifts today is running; not fully staffed so the SLA clock keeps going');
 reset role;
 
 -- ---------------------------------------------------------------- SPG: clock-in, KPI
 select tests.as_user('00000000-0000-0000-0000-0000000000e1');
 set role authenticated;
+select tests.fails($$insert into public.attendances (id, shift_id, user_id, clock_in_at, clock_in_lat, clock_in_lng)
+                     values ('a0', 's1', '00000000-0000-0000-0000-0000000000e1', now(), -7.2625, 112.7389)$$,
+                   'UU PDP', 'no clock-in before consent');
+update public.profiles set consent_version = 'test-v1', consent_at = now() - interval '1 year'
+ where id = '00000000-0000-0000-0000-0000000000e1';
+select tests.ok((select consent_at > now() - interval '1 minute' from public.profiles where username = 'spg1'),
+                'consent time is stamped by the server, not the phone');
 -- ~300 m north of the venue pin: outside the 150 m radius
 insert into public.attendances (id, shift_id, user_id, clock_in_at, clock_in_lat, clock_in_lng, geo_valid, late_min)
 values ('a1', 's1', '00000000-0000-0000-0000-0000000000e1', now(), -7.2598, 112.7389, true, 0);
@@ -186,6 +196,50 @@ select tests.ok(public.detect_no_shows() = 1, 'no-show detected 30 minutes after
 select tests.ok((select status from public.shifts where id = 's3') = 'no_show', 'no-show shift marked');
 select tests.ok((select due_at = public.add_working_days(requested_at, 1) from public.replacements where original_shift_id = 's3'),
                 'Strong city replacement due in 1 working day');
+
+-- ---------------------------------------------------------------- KPI template locked once used
+select tests.as_user('00000000-0000-0000-0000-0000000000b1');
+set role authenticated;
+select tests.fails($$update public.campaigns set kpi_fields = '[{"key":"contacts","label":"Contacts","unit":"count","proof_required":false}]' where id = 'c_food'$$,
+                   'tidak bisa diubah', 'a KPI already logged cannot be removed from the campaign');
+update public.campaigns set kpi_fields = kpi_fields || '[{"key":"merchants","label":"Merchants","unit":"count","proof_required":true}]'::jsonb where id = 'c_food';
+select tests.ok((select jsonb_array_length(kpi_fields) = 3 from public.campaigns where id = 'c_food'), 'new KPI fields can still be added');
+reset role;
+
+-- ---------------------------------------------------------------- replacements and staffing SLA
+select tests.as_user('00000000-0000-0000-0000-0000000000e1');
+set role authenticated;
+select tests.fails($$select public.open_replacement('s1', 'resignation')$$, 'Hanya PIC', 'SPG cannot open a replacement');
+reset role;
+select tests.as_user('00000000-0000-0000-0000-0000000000b1');
+set role authenticated;
+select tests.fails($$insert into public.shifts (id, request_id, venue_id, spg_id, shift_date, planned_start, planned_end, replaces_shift_id)
+                     select 's3b', 'r1', 'v_tp', '00000000-0000-0000-0000-0000000000e3', d, '18:00', '23:00', 's3' from t_clock$$,
+                   'SPG lain', 'replacement must be another SPG');
+-- spg1 already has s1 today, so the replacement goes to a fresh trained SPG
+reset role;
+select tests.as_user(null);
+insert into auth.users (id, email, raw_user_meta_data) values ('00000000-0000-0000-0000-0000000000e4', 'spg4@internal.spc', '{"username":"spg4"}');
+update public.profiles set active = true, role = 'spg', grade = 'B', contract_type = 'daily_worker', city_id = 'kota-surabaya' where username = 'spg4';
+insert into public.trainings (id, spg_id, campaign_id, score) values ('tr4', '00000000-0000-0000-0000-0000000000e4', 'c_food', 80);
+select tests.as_user('00000000-0000-0000-0000-0000000000b1');
+set role authenticated;
+insert into public.shifts (id, request_id, venue_id, spg_id, shift_date, planned_start, planned_end, replaces_shift_id)
+  select 's3b', 'r1', 'v_tp', '00000000-0000-0000-0000-0000000000e4', d, '18:00', '23:00', 's3' from t_clock;
+select tests.ok((select filled_shift_id = 's3b' and filled_at is not null from public.replacements where original_shift_id = 's3'),
+                'scheduling the replacement shift fills the replacement');
+-- a future one-day request: one shift = fully staffed, SLA clock stops
+insert into public.requests (id, campaign_id, city_id, venue_id, grade, headcount, start_date, end_date, shift_hours, package)
+values ('r_future', 'c_food', 'kota-surabaya', 'v_tp', 'B', 1, public.wib(now())::date + 5, public.wib(now())::date + 5, 8, 'daily');
+insert into public.shifts (id, request_id, venue_id, spg_id, shift_date, planned_start, planned_end)
+  values ('s_f1', 'r_future', 'v_tp', '00000000-0000-0000-0000-0000000000e1', public.wib(now())::date + 5, '09:00', '17:00');
+select tests.ok((select status = 'staffed' and staffed_at is not null from public.requests where id = 'r_future'),
+                'all names scheduled: request staffed, SLA hiring stops');
+select public.open_replacement('s_f1', 'resignation');
+select tests.ok((select status from public.shifts where id = 's_f1') = 'replaced', 'future shift of a resigning SPG leaves the roster');
+select tests.ok((select status = 'new' and staffed_at is not null from public.requests where id = 'r_future'),
+                'request back to new until refilled; first staffed time kept for the SLA');
+reset role;
 
 -- ---------------------------------------------------------------- clock-out, validation, billing
 select tests.as_user('00000000-0000-0000-0000-0000000000b1');

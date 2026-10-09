@@ -1,6 +1,7 @@
 /** Database rows (snake_case, ISO timestamps) → app model (camelCase, epoch ms). Pure. */
 import type {
-  Attendance, Campaign, City, GrabRequest, KpiField, KpiLog, Profile, Shift, ShiftException, Venue,
+  Attendance, Campaign, City, DailyReport, DailyReportTotals, GrabRequest, KpiField, KpiLog, LivePosition, Profile,
+  Replacement, Shift, ShiftException, Training, Venue,
 } from '../types';
 
 type Row = Record<string, unknown>;
@@ -12,6 +13,9 @@ export function mapProfile(r: Row): Profile {
     id: String(r.id), name: String(r.name), username: String(r.username), role: r.role as Profile['role'],
     cityId: (r.city_id as string | null) ?? null, active: Boolean(r.active),
     grade: (r.grade as Profile['grade']) ?? null, contractType: (r.contract_type as Profile['contractType']) ?? null,
+    documentsOk: Boolean(r.documents_ok), phoneOk: Boolean(r.phone_ok), bpjsRegistered: Boolean(r.bpjs_registered),
+    consentVersion: (r.consent_version as string | null) ?? null, consentAt: ms(r.consent_at),
+    photoPath: (r.photo_path as string | null) ?? null,
   };
 }
 
@@ -37,12 +41,14 @@ export const mapRequest = (r: Row): GrabRequest => ({
   grade: r.grade as GrabRequest['grade'], headcount: Number(r.headcount), startDate: String(r.start_date),
   endDate: String(r.end_date), shiftHours: Number(r.shift_hours) as 8 | 10, package: r.package as GrabRequest['package'],
   status: r.status as GrabRequest['status'], submittedAt: ms(r.submitted_at) ?? 0, slaHiringDue: ms(r.sla_hiring_due),
+  staffedAt: ms(r.staffed_at), notes: String(r.notes ?? ''),
 });
 
 export const mapShift = (r: Row): Shift => ({
   id: String(r.id), requestId: String(r.request_id), venueId: String(r.venue_id), spgId: String(r.spg_id),
   shiftDate: String(r.shift_date), plannedStart: String(r.planned_start), plannedEnd: String(r.planned_end),
   overtimeHours: Number(r.overtime_hours ?? 0), status: r.status as Shift['status'], validatedAt: ms(r.validated_at),
+  replacesShiftId: (r.replaces_shift_id as string | null) ?? null,
 });
 
 export const mapAttendance = (r: Row): Omit<Attendance, 'route'> & { route: Attendance['route'] } => ({
@@ -60,4 +66,32 @@ export const mapKpi = (r: Row): KpiLog => ({
 export const mapException = (r: Row): ShiftException => ({
   id: Number(r.id), shiftId: String(r.shift_id), type: r.type as ShiftException['type'], detail: String(r.detail ?? ''),
   detectedAt: ms(r.detected_at) ?? 0, status: r.status as ShiftException['status'], note: String(r.note ?? ''),
+});
+
+export const mapTraining = (r: Row): Training => ({
+  id: String(r.id), spgId: String(r.spg_id), campaignId: String(r.campaign_id), passedAt: ms(r.passed_at) ?? 0,
+  score: num(r.score),
+});
+
+export const mapReplacement = (r: Row): Replacement => ({
+  id: String(r.id), originalShiftId: String(r.original_shift_id), reason: r.reason as Replacement['reason'],
+  requestedAt: ms(r.requested_at) ?? 0, dueAt: ms(r.due_at) ?? 0,
+  filledShiftId: (r.filled_shift_id as string | null) ?? null, filledAt: ms(r.filled_at),
+});
+
+export function mapDailyReport(r: Row): DailyReport {
+  const t = (r.totals ?? {}) as Partial<DailyReportTotals>;
+  return {
+    date: String(r.report_date), generatedAt: ms(r.generated_at) ?? 0, publishedAt: ms(r.published_at),
+    totals: {
+      planned: Number(t.planned ?? 0), attended: Number(t.attended ?? 0), no_show: Number(t.no_show ?? 0),
+      geo_valid: Number(t.geo_valid ?? 0), open_exceptions: Number(t.open_exceptions ?? 0),
+      kpi: Object.fromEntries(Object.entries(t.kpi ?? {}).map(([k, v]) => [k, Number(v)])),
+    },
+  };
+}
+
+export const mapLivePosition = (r: Row): LivePosition => ({
+  userId: String(r.user_id), name: String(r.name), shiftId: String(r.shift_id), venueId: String(r.venue_id),
+  lat: Number(r.lat), lng: Number(r.lng), at: ms(r.recorded_at) ?? 0,
 });

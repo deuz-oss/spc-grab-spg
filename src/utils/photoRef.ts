@@ -8,7 +8,9 @@
  */
 export const SELFIE_BUCKET = 'selfies';
 export const KPI_PROOF_BUCKET = 'kpi-proof';
-export type PhotoBucket = typeof SELFIE_BUCKET | typeof KPI_PROOF_BUCKET;
+/** SPG photo for the roster Grab confirms (migration 0007); uploaded by back office. */
+export const PROFILE_PHOTO_BUCKET = 'profile-photos';
+export type PhotoBucket = typeof SELFIE_BUCKET | typeof KPI_PROOF_BUCKET | typeof PROFILE_PHOTO_BUCKET;
 
 /** Object path for a new upload; the owner folder is what storage RLS checks. */
 export function photoObjectPath(ownerId: string, recordId: string, ext: string): string {

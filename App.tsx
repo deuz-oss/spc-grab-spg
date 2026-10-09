@@ -10,6 +10,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import NetInfo from '@react-native-community/netinfo';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -21,32 +22,82 @@ import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { TrackingWatcher } from './src/components/TrackingWatcher';
 import { installGlobalErrorHandlers } from './src/utils/errorReport';
 import { setSentryUser } from './src/sentry';
-import { useCurrentUser, useStore } from './src/store/useStore';
+import { needsConsent, useCurrentUser, useStore } from './src/store/useStore';
 import LoginScreen from './src/screens/LoginScreen';
 import SpgTodayScreen from './src/screens/SpgTodayScreen';
 import OpsTodayScreen from './src/screens/OpsTodayScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import ConsentScreen from './src/screens/ConsentScreen';
+import SpgScheduleScreen from './src/screens/SpgScheduleScreen';
+import LiveMapScreen from './src/screens/LiveMapScreen';
+import ReportsScreen from './src/screens/ReportsScreen';
+import RequestsScreen from './src/screens/requests/RequestsScreen';
+import RequestFormScreen from './src/screens/requests/RequestFormScreen';
+import RequestDetailScreen from './src/screens/requests/RequestDetailScreen';
+import type { RequestsStackParams } from './src/screens/requests/types';
+import DataHomeScreen from './src/screens/data/DataHomeScreen';
+import SpgDetailScreen from './src/screens/data/SpgDetailScreen';
+import AccountFormScreen from './src/screens/data/AccountFormScreen';
+import VenueFormScreen from './src/screens/data/VenueFormScreen';
+import CampaignFormScreen from './src/screens/data/CampaignFormScreen';
+import type { DataStackParams } from './src/screens/data/types';
 
 installGlobalErrorHandlers();
 
 const Tabs = createBottomTabNavigator();
+const ReqStack = createNativeStackNavigator<RequestsStackParams>();
+const DataStack = createNativeStackNavigator<DataStackParams>();
 
 const ICONS: Record<string, [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap]> = {
   'Hari Ini': ['today', 'today-outline'],
+  Jadwal: ['calendar', 'calendar-outline'],
+  Request: ['document-text', 'document-text-outline'],
+  Peta: ['map', 'map-outline'],
+  Laporan: ['bar-chart', 'bar-chart-outline'],
+  Data: ['people', 'people-outline'],
   Profil: ['person-circle', 'person-circle-outline'],
 };
 
 const theme = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: C.bg, primary: C.primary } };
 
+const header = {
+  headerStyle: { backgroundColor: C.primary },
+  headerTintColor: C.onPrimary,
+  headerTitleStyle: { fontFamily: F.bold },
+};
+
+function RequestsTab() {
+  return (
+    <ReqStack.Navigator screenOptions={header}>
+      <ReqStack.Screen name="Requests" component={RequestsScreen} options={{ title: 'Request' }} />
+      <ReqStack.Screen name="RequestForm" component={RequestFormScreen} options={{ title: 'Request baru' }} />
+      <ReqStack.Screen name="RequestDetail" component={RequestDetailScreen} options={{ title: 'Detail request' }} />
+    </ReqStack.Navigator>
+  );
+}
+
+function DataTab() {
+  return (
+    <DataStack.Navigator screenOptions={header}>
+      <DataStack.Screen name="DataHome" component={DataHomeScreen} options={{ title: 'Data' }} />
+      <DataStack.Screen name="SpgDetail" component={SpgDetailScreen} options={{ title: 'Detail akun' }} />
+      <DataStack.Screen name="AccountForm" component={AccountFormScreen} options={{ title: 'Akun baru' }} />
+      <DataStack.Screen name="VenueForm" component={VenueFormScreen} options={{ title: 'Venue' }} />
+      <DataStack.Screen name="CampaignForm" component={CampaignFormScreen} options={{ title: 'Campaign' }} />
+    </DataStack.Navigator>
+  );
+}
+
+/** Tabs per role (spec: Users & Roles). RLS decides what each tab can read; this only hides what a role never uses. */
 function Shell() {
   const me = useCurrentUser()!;
-  const field = FIELD_ROLES.includes(me.role);
+  const role = me.role;
+  const field = FIELD_ROLES.includes(role);
+  const staff = role === 'super_admin' || role === 'pic' || role === 'back_office';
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
-        headerStyle: { backgroundColor: C.primary },
-        headerTintColor: C.onPrimary,
-        headerTitleStyle: { fontFamily: F.bold },
+        ...header,
         headerTitle: APP_NAME,
         tabBarActiveTintColor: C.primary,
         tabBarLabelStyle: { fontFamily: F.semi },
@@ -57,6 +108,11 @@ function Shell() {
       })}
     >
       <Tabs.Screen name="Hari Ini" component={field ? SpgTodayScreen : OpsTodayScreen} />
+      {field && <Tabs.Screen name="Jadwal" component={SpgScheduleScreen} />}
+      {!field && <Tabs.Screen name="Request" component={RequestsTab} options={{ headerShown: false }} />}
+      {(!field || role === 'coordinator') && <Tabs.Screen name="Peta" component={LiveMapScreen} />}
+      {!field && <Tabs.Screen name="Laporan" component={ReportsScreen} />}
+      {staff && <Tabs.Screen name="Data" component={DataTab} options={{ headerShown: false }} />}
       <Tabs.Screen name="Profil" component={ProfileScreen} />
     </Tabs.Navigator>
   );
@@ -90,13 +146,13 @@ function Root() {
       </View>
     );
   }
-  return me ? (
+  if (!me) return <LoginScreen />;
+  if (needsConsent(me)) return <ConsentScreen />;
+  return (
     <>
       <TrackingWatcher />
       <Shell />
     </>
-  ) : (
-    <LoginScreen />
   );
 }
 

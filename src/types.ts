@@ -12,6 +12,12 @@ export interface Profile {
   active: boolean;
   grade: Grade | null;
   contractType: 'daily_worker' | 'pkwt' | null;
+  documentsOk: boolean;
+  phoneOk: boolean;
+  bpjsRegistered: boolean;
+  consentVersion: string | null;
+  consentAt: number | null;
+  photoPath: string | null;
 }
 
 export interface City {
@@ -62,6 +68,8 @@ export interface GrabRequest {
   status: RequestStatus;
   submittedAt: number;
   slaHiringDue: number | null;
+  staffedAt: number | null;
+  notes: string;
 }
 
 export type ShiftStatus = 'planned' | 'done' | 'no_show' | 'replaced' | 'cancelled';
@@ -77,6 +85,7 @@ export interface Shift {
   overtimeHours: number;
   status: ShiftStatus;
   validatedAt: number | null;
+  replacesShiftId: string | null;
 }
 
 export interface RoutePoint {
@@ -126,4 +135,48 @@ export interface ShiftException {
   detectedAt: number;
   status: 'open' | 'resolved' | 'waived';
   note: string;
+}
+
+export interface Training {
+  id: string;
+  spgId: string;
+  campaignId: string;
+  passedAt: number;
+  score: number | null;
+}
+
+export interface Replacement {
+  id: string;
+  originalShiftId: string;
+  reason: 'no_show' | 'resignation' | 'underperform';
+  requestedAt: number;
+  dueAt: number;
+  filledShiftId: string | null;
+  filledAt: number | null;
+}
+
+export interface DailyReportTotals {
+  planned: number;
+  attended: number;
+  no_show: number;
+  geo_valid: number;
+  open_exceptions: number;
+  kpi: Record<string, number>;
+}
+
+export interface DailyReport {
+  date: string; // YYYY-MM-DD (WIB)
+  generatedAt: number;
+  publishedAt: number | null;
+  totals: DailyReportTotals;
+}
+
+export interface LivePosition {
+  userId: string;
+  name: string;
+  shiftId: string;
+  venueId: string;
+  lat: number;
+  lng: number;
+  at: number;
 }
