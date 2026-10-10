@@ -55,3 +55,17 @@ export function fmtIDR(n: number): string {
 export function fmtKm(km: number): string {
   return `${km.toLocaleString('id-ID', { maximumFractionDigits: 2 })} km`;
 }
+
+export const DAYS_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+/** "Sabtu, 10 Oktober" from a YYYY-MM-DD programme (WIB) date key. */
+export function fmtDayLong(key: string): string {
+  const d = new Date(`${key}T00:00:00Z`);
+  return `${DAYS_ID[d.getUTCDay()]}, ${d.getUTCDate()} ${MONTHS_ID[d.getUTCMonth()]}`;
+}
+
+/** "Sab 10 Okt" from a YYYY-MM-DD date key. */
+export function fmtDayShort(key: string): string {
+  const d = new Date(`${key}T00:00:00Z`);
+  return `${DAYS_ID[d.getUTCDay()].slice(0, 3)} ${d.getUTCDate()} ${MONTHS_ID[d.getUTCMonth()].slice(0, 3)}`;
+}

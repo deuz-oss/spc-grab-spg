@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Btn, Card, Field, Input } from '../components/ui';
+import { Btn, Field, Input } from '../components/ui';
 import { useStore } from '../store/useStore';
-import { APP_NAME } from '../config';
-import { C, F, SP, T } from '../theme';
+import { C, ELEV, R, SP, T } from '../theme';
 
 export default function LoginScreen() {
   const signIn = useStore((s) => s.signIn);
@@ -25,28 +24,28 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.primary }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: SP.lg }} keyboardShouldPersistTaps="handled">
-        <View style={{ alignItems: 'center', marginBottom: SP.xl }}>
-          <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="location" size={28} color={C.onGold} />
+        <View style={{ maxWidth: 420, width: '100%', alignSelf: 'center' }}>
+          <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="id-card" size={26} color={C.onGold} />
           </View>
-          <Text style={[T.display, { color: C.onDark, marginTop: SP.md }]}>{APP_NAME}</Text>
-          <Text style={[T.body, { color: C.onDarkMuted, marginTop: SP.xs }]}>PT Sinergi Performa Cipta</Text>
-        </View>
-        <Card style={{ maxWidth: 420, width: '100%', alignSelf: 'center' }}>
-          <Field label="Username" required>
-            <Input value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} placeholder="mis. budi.sby" />
-          </Field>
-          <Field label="Password" required error={error ?? undefined}>
-            <Input value={password} onChangeText={setPassword} secureTextEntry onSubmitEditing={submit} />
-          </Field>
-          <Btn title="Masuk" onPress={submit} loading={busy} />
-          <Text style={[T.meta, { marginTop: SP.md, textAlign: 'center' }]}>
-            Akun dibuat oleh SPC. Lupa password? Hubungi PIC Anda.
+          <Text style={[T.display, { color: C.onDark, marginTop: SP.lg }]}>Masuk ke shift Anda</Text>
+          <Text style={[T.body, { color: C.onDarkMuted, marginTop: SP.xs, marginBottom: SP.xl }]}>
+            Program SPG Grab — PT Sinergi Performa Cipta
           </Text>
-        </Card>
-        <Text style={[T.meta, { color: C.onDarkFaint, textAlign: 'center', marginTop: SP.lg, fontFamily: F.reg }]}>
-          Data lokasi dan foto hanya dipakai untuk absensi dan laporan program.
-        </Text>
+          <View style={{ backgroundColor: C.card, borderRadius: R.card + 4, padding: SP.lg, gap: SP.md, ...ELEV[2] }}>
+            <Field label="Username">
+              <Input value={username} onChangeText={setUsername} autoCapitalize="none" autoCorrect={false} placeholder="mis. sari.sby" />
+            </Field>
+            <Field label="Password" error={error ?? undefined}>
+              <Input value={password} onChangeText={setPassword} secureTextEntry onSubmitEditing={submit} />
+            </Field>
+            <Btn title="Masuk" onPress={submit} loading={busy} />
+            <Text style={[T.meta, { textAlign: 'center' }]}>Lupa password? Hubungi PIC SPC Anda.</Text>
+          </View>
+          <Text style={[T.meta, { color: C.onDarkFaint, marginTop: SP.lg }]}>
+            Lokasi dan foto hanya dipakai untuk absensi dan laporan program.
+          </Text>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

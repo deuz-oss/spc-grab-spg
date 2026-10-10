@@ -1,27 +1,29 @@
 /**
- * Design tokens — SPC Grab SPG
- * Re-themed from spc-field-force's Trust Blue to a navy/gold enterprise
- * palette per PRD §3. Deep navy primary chrome + a restrained gold accent
- * for brand moments (not status — status colors stay conventional
- * green/amber/blue/red so meaning never collides with brand).
- * Contrast: semantic colors kept AA (>=4.5:1) against their expected background.
+ * Design tokens — SPC Grab SPG ("shift pass").
+ * Ink blue chrome and a single hi-vis amber, the colour of a field lanyard or safety vest:
+ * amber is spent only on "act now" (clock-in, the shift running now), never on decoration.
+ * Status colours stay conventional green/amber/blue/red so meaning never collides with brand.
+ * The app is read outdoors in malls and on the street, so contrast is AA or better everywhere
+ * and every number a field worker needs is large and tabular.
  */
 
 export const C = {
   // Brand — deep navy, with a gold accent reserved for brand marks / emphasis,
   // not for status meaning. Navy passes AA as text-on-white at ~11:1.
-  primary: '#0B1B3A',
-  primaryDark: '#081226', // pressed state
-  primaryText: '#13284F',
+  primary: '#0F2233',
+  primaryDark: '#091725', // pressed state
+  primaryText: '#16324A',
   onPrimary: '#FFFFFF', // text/icon color to place ON a primary-colored surface
-  gold: '#C9A227',
-  onGold: '#1A1400',
+  /** Hi-vis amber: the one bold colour — act now (ink text on it: 11:1). */
+  gold: '#FFB81C',
+  onGold: '#1F1400',
+  goldSoft: '#FFF1CC',
 
   // Neutral — cool slate
-  bg: '#F8FAFC',
+  bg: '#EDF0F3',
   card: '#FFFFFF',
   surfaceElevated: '#FFFFFF',
-  railBg: '#0B1B3A', // side-rail nav (web/tablet) — deep navy
+  railBg: '#0F2233', // side-rail nav (web/tablet) — deep navy
   // Content on the dark navy surfaces (rail, header, login brand pane)
   onDark: '#FFFFFF',
   onDarkMuted: 'rgba(255,255,255,0.7)',
@@ -29,14 +31,14 @@ export const C = {
   darkActive: 'rgba(255,255,255,0.08)', // selected rail item
   darkDivider: 'rgba(255,255,255,0.08)',
   darkChip: 'rgba(255,255,255,0.16)', // role pill in the header
-  text: '#1E293B',
-  muted: '#475569',
+  text: '#132433',
+  muted: '#4A5B6B',
   faint: '#94A3B8',
-  border: '#E2E8F0',
+  border: '#DCE2E8',
   borderStrong: '#CBD5E1',
   divider: '#F1F5F9',
-  overlay: 'rgba(11, 27, 58, 0.45)',
-  focus: '#13284F',
+  overlay: 'rgba(15, 34, 51, 0.5)',
+  focus: '#16324A',
 
   // Semantik — status warna tetap konvensional (hijau/oranye/biru/merah)
   // supaya tidak bentrok dengan brand; hanya brand yang pindah, bukan makna status.
@@ -136,8 +138,6 @@ export const T = {
     fontSize: 12,
     lineHeight: 16,
     fontFamily: F.semi,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
     color: C.muted,
   } as const,
   label: { fontSize: 13, lineHeight: 18, fontFamily: F.semi, color: C.text } as const,
@@ -163,6 +163,15 @@ export const T = {
     fontVariant: ['tabular-nums'] as any,
   },
   /** timer absensi/kunjungan aktif — angka besar, dipisah dari `display` (dipakai brand title Login) */
+  /** shift times on the pass — the first thing an SPG reads */
+  clock: {
+    fontSize: 40,
+    lineHeight: 46,
+    fontFamily: F.xbold,
+    color: C.onDark,
+    letterSpacing: -1,
+    fontVariant: ['tabular-nums'] as any,
+  },
   timer: {
     fontSize: 30,
     lineHeight: 36,
@@ -190,8 +199,8 @@ export const R = {
 } as const;
 
 const shadowCard = {
-  shadowColor: '#0B1B3A',
-  shadowOpacity: 0.05,
+  shadowColor: '#0F2233',
+  shadowOpacity: 0.06,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 4 },
   elevation: 1,
@@ -202,7 +211,7 @@ export const ELEV = {
   0: {},
   1: shadowCard,
   2: {
-    shadowColor: '#0B1B3A',
+    shadowColor: '#0F2233',
     shadowOpacity: 0.15,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 8 },

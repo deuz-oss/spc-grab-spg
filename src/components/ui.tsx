@@ -137,7 +137,7 @@ export function Btn({
 }: {
   title: string;
   onPress?: () => void;
-  variant?: 'primary' | 'outline' | 'danger' | 'ok';
+  variant?: 'primary' | 'outline' | 'danger' | 'ok' | 'hivis';
   disabled?: boolean;
   /** Narrower and smaller text — still a full 48 dp tap target. */
   small?: boolean;
@@ -151,8 +151,10 @@ export function Btn({
         ? C.dangerFill
         : variant === 'ok'
           ? C.ok
-          : C.card;
-  const fg = variant === 'outline' ? C.primaryText : C.onPrimary;
+          : variant === 'hivis'
+            ? C.gold
+            : C.card;
+  const fg = variant === 'outline' ? C.primaryText : variant === 'hivis' ? C.onGold : C.onPrimary;
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -538,8 +540,6 @@ export function KPICard({
         padding: SP.lg,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: C.border,
-        borderTopWidth: 3,
-        borderTopColor: st.color,
         ...ELEV[1],
       }}
     >

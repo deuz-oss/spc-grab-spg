@@ -13,7 +13,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import NetInfo from '@react-native-community/netinfo';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { APP_NAME, FIELD_ROLES } from './src/config';
 import { C, F } from './src/theme';
@@ -94,10 +94,15 @@ function Shell() {
   const role = me.role;
   const field = FIELD_ROLES.includes(role);
   const staff = role === 'super_admin' || role === 'pic' || role === 'back_office';
+  const insets = useSafeAreaInsets();
+  // Tab roots carry their own large title, so no app-name bar above them; stacks keep their header.
+  const stackTab = { headerShown: false, sceneStyle: { paddingTop: 0, backgroundColor: C.bg } };
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
         ...header,
+        headerShown: false,
+        sceneStyle: { paddingTop: insets.top, backgroundColor: C.bg },
         headerTitle: APP_NAME,
         tabBarActiveTintColor: C.primary,
         tabBarLabelStyle: { fontFamily: F.semi },
@@ -109,10 +114,10 @@ function Shell() {
     >
       <Tabs.Screen name="Hari Ini" component={field ? SpgTodayScreen : OpsTodayScreen} />
       {field && <Tabs.Screen name="Jadwal" component={SpgScheduleScreen} />}
-      {!field && <Tabs.Screen name="Request" component={RequestsTab} options={{ headerShown: false }} />}
+      {!field && <Tabs.Screen name="Request" component={RequestsTab} options={stackTab} />}
       {(!field || role === 'coordinator') && <Tabs.Screen name="Peta" component={LiveMapScreen} />}
       {!field && <Tabs.Screen name="Laporan" component={ReportsScreen} />}
-      {staff && <Tabs.Screen name="Data" component={DataTab} options={{ headerShown: false }} />}
+      {staff && <Tabs.Screen name="Data" component={DataTab} options={stackTab} />}
       <Tabs.Screen name="Profil" component={ProfileScreen} />
     </Tabs.Navigator>
   );

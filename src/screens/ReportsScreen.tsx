@@ -6,7 +6,7 @@ import { showDialog, showToast } from '../components/dialog';
 import { useCurrentUser, useStore } from '../store/useStore';
 import { useNow } from '../components/useNow';
 import { programDayKey } from '../utils/period';
-import { fmtDateTime } from '../utils/format';
+import { fmtDayLong, fmtTime } from '../utils/format';
 import { toCsv } from '../utils/csv';
 import { exportCsv } from '../utils/export';
 import { attendanceRows, billingLines, billingRows } from '../utils/exports';
@@ -83,18 +83,28 @@ export default function ReportsScreen() {
   };
 
   const reportCard = (r: DailyReport) => (
-    <Card key={r.date} style={{ marginBottom: SP.sm, gap: SP.xs }}>
+    <Card key={r.date} style={{ marginBottom: SP.sm, gap: SP.md }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={T.label}>{r.date}</Text>
-        <Badge label={r.publishedAt ? `Terbit ${fmtDateTime(r.publishedAt)}` : 'Draf'} color={r.publishedAt ? C.ok : C.warn} />
+        <Text style={T.h3}>{fmtDayLong(r.date)}</Text>
+        <Badge label={r.publishedAt ? `Terbit ${fmtTime(r.publishedAt)}` : 'Draf'} color={r.publishedAt ? C.ok : C.warn} />
       </View>
-      <Text style={T.body}>
-        Terjadwal {r.totals.planned} · hadir {r.totals.attended} · tidak hadir {r.totals.no_show} · di lokasi {r.totals.geo_valid}
-      </Text>
+      <View style={{ flexDirection: 'row' }}>
+        <Figure n={r.totals.planned} label="Terjadwal" />
+        <Figure n={r.totals.attended} label="Hadir" />
+        <Figure n={r.totals.no_show} label="Tidak hadir" tone={r.totals.no_show ? C.dangerStrong : undefined} />
+        <Figure n={r.totals.geo_valid} label="Di lokasi" />
+      </View>
       {Object.keys(r.totals.kpi).length > 0 && (
-        <Muted>KPI: {Object.entries(r.totals.kpi).map(([k, v]) => `${campaignLabel(k)} ${v}`).join(' · ')}</Muted>
+        <View style={{ borderTopWidth: 1, borderTopColor: C.divider, paddingTop: SP.sm, gap: 2 }}>
+          {Object.entries(r.totals.kpi).map(([k, v]) => (
+            <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={T.body}>{campaignLabel(k)}</Text>
+              <Text style={[T.h3, { fontVariant: ['tabular-nums'] }]}>{v}</Text>
+            </View>
+          ))}
+        </View>
       )}
-      {r.totals.open_exceptions > 0 && <Muted>Exception terbuka: {r.totals.open_exceptions}</Muted>}
+      {r.totals.open_exceptions > 0 && <Muted>{r.totals.open_exceptions} exception masih terbuka saat laporan dibuat.</Muted>}
       {isOps && !r.publishedAt && (
         <Btn title="Terbitkan ke Grab" small onPress={() => publish(r.date)} loading={busy === `pub-${r.date}`} />
       )}
@@ -128,5 +138,14 @@ export default function ReportsScreen() {
       </Card>
       <View style={{ height: SP.xl }} />
     </ScrollView>
+  );
+}
+
+function Figure({ n, label, tone }: { n: number; label: string; tone?: string }) {
+  return (
+    <View style={{ flex: 1 }}>
+      <Text style={[T.metric, { fontSize: 22, lineHeight: 26 }, tone ? { color: tone } : null]}>{n}</Text>
+      <Text style={T.meta}>{label}</Text>
+    </View>
   );
 }
