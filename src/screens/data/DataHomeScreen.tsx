@@ -56,6 +56,7 @@ export default function DataHomeScreen({ navigation }: Props) {
             level="card"
             action={canProvision ? { label: 'Tambah SPG', onPress: () => navigation.navigate('AccountForm', { role: 'spg' }) } : undefined}
           />
+          {!canProvision && <Muted style={{ marginBottom: SP.sm }}>Akun SPG baru dibuat oleh back office atau super admin.</Muted>}
           {field.length === 0 && <Empty text="Belum ada SPG." icon="people-outline" />}
           {field.map((p) => {
             const trained = s.trainings.filter((t) => t.spgId === p.id).length;
