@@ -14,7 +14,7 @@ loop: **request → schedule → geotag clock-in → KPI → server checks → P
 | Spec approval | 10–12 Oct | ✅ approved 9 Oct |
 | Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 64 smoke checks pass on Postgres 16 |
 | Foundation: app scaffold | 13–17 Oct | ✅ login, SPG today (selfie clock-in, KPI, clock-out, offline queue), PIC/Grab today (exception queue, validation), profile — tsc, lint, 56 unit tests, web bundle green |
-| Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9 Oct | 🟡 all migrations applied except the retention purge (part of 0003; the connector refuses SQL containing DELETE, so it is pasted in the SQL Editor). 3 of 4 cron jobs live. Demo data from `supabase/seed/staging_demo.sql` (6 accounts, one per role) |
+| Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9–11 Oct | ✅ migrations `0001`–`0010` applied (the retention purge was pasted in the SQL Editor). All 5 cron jobs live (no-shows, auto-close, daily report, request status, retention). Schema checked object by object against the repo on 11 Oct: identical apart from comments. Edge function `admin-users` v2. Demo data from `supabase/seed/staging_demo.sql` (6 accounts, one per role) |
 | Foundation: Android dev build on a real phone | 13–17 Oct | ⬜ needs EAS project |
 | Core loop screens | 19–24 Oct | ✅ built 9 Oct — requests & roster, scheduling with grade/training checks, replacements, live map, consent, daily report publish, CSV exports (attendance, payroll, billing), SPG onboarding, venues, campaigns, accounts. Verified on staging via SQL as each role and in a mocked-backend browser run; not yet on a real phone |
 | Reports, payroll export, pilot (5 SPG) | 26–30 Oct | ⬜ |
@@ -35,6 +35,7 @@ Migrations in `supabase/migrations/`, applied in filename order to a Supabase pr
 | `0008_campaign_kpi_lock.sql` | KPI fields fixed once SPG have logged against them |
 | `0009_audit_hardening.sql` | Audit 11 Oct 2026 (`docs/audit/`): API callers cannot set shift status/validation/overtime (billing), request SLA fields, the clock-in selfie, or another person's consent; daily report no longer counts replaced shifts. Applied to staging 11 Oct 2026 |
 | `0010_late_arrival_and_resolve.sql` | No clock-in on a shift already marked no-show (the SPG is told to call the PIC); resolving an already-closed exception says so. Applied to staging 11 Oct 2026 |
+| `0011_anon_grants_tidy.sql` | Signed-out callers execute no function at all (two helpers had slipped through); `retention_months()` gets a fixed `search_path`. **Not yet applied to staging** |
 | `0005_hardening.sql` | From the Supabase security advisor: signed-out callers execute no function, trigger functions are not callable over the API, fixed `search_path` everywhere |
 
 Rules that live in the database, not the phone:
@@ -74,7 +75,7 @@ Reused unchanged from `spc-nc-workforce`: UI kit, dialogs, theme, offline replay
 location task, tracking watcher, offline snapshot, error reporting. Rewritten for Grab: types, store, mappers,
 storage (private `selfies` / `kpi-proof` buckets), geofence helper, screens.
 
-Checks: `npm run typecheck`, `npm run lint`, `npm test` (77 unit tests), `npm run test:db` (81 database checks).
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (83 unit tests, including the edge-function logic), `npm run test:db` (82 database checks).
 CI runs all of them plus Expo doctor and a web bundle on every push.
 
 Tabs per role: SPG/coordinator — Hari Ini, Jadwal (coordinator also Peta), Profil, after a one-time UU PDP consent.
@@ -86,9 +87,34 @@ Super admin for any role; back office for SPG/coordinators only.
 
 UI smoke test without a backend: `scripts/ui-smoke.mjs` (see its header).
 
+### Retention (decision D5: selfies and GPS trails deleted after 12 months)
+
+1. **19:30 UTC (02:30 WIB)** — pg_cron `grab-retention` runs `purge_expired_personal_data()`: deletes old selfie
+   references and route points, and queues the selfie objects in `media_purge_queue`.
+2. **Edge function `supabase/functions/purge-media`** deletes the queued objects from the `selfies` bucket and
+   dequeues them. Only the `selfies` bucket and `<uid>/<file>` paths are touched; anything else stays queued and is
+   reported. Service role only — user tokens are refused. Logic and tests: `purge.ts`, `purge.test.ts`.
+
+Deploy and schedule it once per project (an operator step: the service key goes in Supabase Vault, never in the repo):
+
+```sql
+-- after deploying supabase/functions/purge-media (JWT verification on)
+create extension if not exists pg_net;
+select vault.create_secret('<service-role key>', 'service_role_key');
+select cron.schedule('grab-purge-media', '0 20 * * *', $job$
+  select net.http_post(
+    url     := 'https://<project-ref>.supabase.co/functions/v1/purge-media',
+    headers := jsonb_build_object('Authorization', 'Bearer ' ||
+                 (select decrypted_secret from vault.decrypted_secrets where name = 'service_role_key')))
+$job$);
+```
+
+20:00 UTC = 03:00 WIB, half an hour after the SQL step. The response (purged / skipped / errors) is in
+`net._http_response` and the function logs.
+
 ## Open items (from the spec)
 
-- Edge function still to write: `purge-media` (deletes storage objects listed in `media_purge_queue`; the SQL side runs nightly).
+- Edge function `purge-media` is written (see "Retention" below) but **not yet deployed or scheduled** on staging.
 - KPI outlier rule (P2), billing lines per month (P2), Grab self-service request form (P2).
 - Inherited from the reference: iOS background location unvalidated, EAS production build never run, push unverified,
   map tiles must move to a keyed provider before go-live.

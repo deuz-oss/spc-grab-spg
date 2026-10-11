@@ -55,7 +55,7 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test \"src/**/*.test.ts\"",
+    "test": "tsx --test \"src/**/*.test.ts\" \"supabase/functions/**/*.test.ts\"",
     "test:db": "./scripts/test-db.sh",
     "test:db:docker": "bash scripts/test-db-docker.sh",
     "gen:types": "npx supabase gen types typescript --linked --schema public > src/lib/database.types.ts",

@@ -372,6 +372,12 @@ select tests.as_user(null);
 select tests.ok((public.build_daily_report(public.wib(now())::date + 5)->>'planned')::int = 0,
                 'daily report: a shift taken off the roster by a replacement is not counted as planned');
 
+-- ---------------------------------------------------------------- no function for signed-out callers (migration 0011)
+select tests.ok(not exists (
+  select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')),
+  'anon can execute no function in public');
+
 -- ---------------------------------------------------------------- late arrival and double resolve (migration 0010)
 select tests.as_user('00000000-0000-0000-0000-0000000000e3');
 set role authenticated;
