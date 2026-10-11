@@ -327,4 +327,43 @@ select tests.ok(tests.count_rows($$select 1 from public.media_purge_queue where 
                 'purged selfie queued for storage deletion');
 select tests.ok(tests.count_rows($$select 1 from public.attendances where id = 'a_old'$$) = 1, 'attendance row kept for invoices');
 
+-- ---------------------------------------------------------------- audit hardening (migration 0009)
+select tests.as_user('00000000-0000-0000-0000-0000000000b1');
+set role authenticated;
+insert into public.shifts (id, request_id, venue_id, spg_id, shift_date, planned_start, planned_end, status, validated_at, overtime_hours)
+  select 's_forge', 'r1', 'v_tp', '00000000-0000-0000-0000-0000000000e1', d + 2, '09:00', '19:00', 'done', now(), 9 from t_clock;
+select tests.ok((select status = 'planned' and validated_at is null and overtime_hours = 2 from public.shifts where id = 's_forge'),
+                'a shift cannot be inserted already done, validated, or with made-up overtime');
+select tests.ok(tests.count_rows($$select 1 from public.billable_shifts where shift_id = 's_forge'$$) = 0, 'unworked shift is not billable');
+select tests.fails($$update public.shifts set status = 'done' where id = 's_forge'$$, 'diatur server', 'PIC cannot mark an unworked shift done');
+select tests.fails($$update public.shifts set validated_at = now() where id = 's_forge'$$, 'diatur server', 'validation only through validate_shift');
+select tests.fails($$update public.shifts set overtime_hours = 6 where id = 's_forge'$$, 'diatur server', 'overtime hours are server-set');
+update public.shifts set status = 'cancelled' where id = 's_forge';
+select tests.ok((select status from public.shifts where id = 's_forge') = 'cancelled', 'PIC can still cancel a planned shift');
+insert into public.requests (id, campaign_id, city_id, venue_id, grade, headcount, start_date, end_date, shift_hours, package, staffed_at)
+values ('r_forge', 'c_food', 'kota-surabaya', 'v_tp', 'C', 1, current_date + 9, current_date + 9, 8, 'daily', now());
+select tests.ok((select staffed_at is null from public.requests where id = 'r_forge'), 'a request cannot be inserted already staffed');
+select tests.fails($$update public.requests set sla_hiring_due = sla_hiring_due + interval '10 days' where id = 'r1'$$,
+                   'diatur server', 'SLA due date cannot be moved');
+select tests.fails($$update public.requests set staffed_at = submitted_at where id = 'r1'$$, 'diatur server', 'staffed time cannot be backdated');
+select tests.fails($$update public.requests set status = 'staffed' where id = 'r1'$$, 'diatur server', 'request status is server-set');
+update public.requests set status = 'cancelled' where id = 'r_forge';
+select tests.ok((select status from public.requests where id = 'r_forge') = 'cancelled', 'PIC can still cancel a request');
+select tests.fails($$update public.profiles set consent_version = 'test-v1' where id = '00000000-0000-0000-0000-0000000000e2'$$,
+                   'pemilik akun', 'staff cannot give consent on behalf of an SPG');
+reset role;
+
+select tests.as_user('00000000-0000-0000-0000-0000000000d1');
+set role authenticated;
+insert into public.attendance_media values ('a_coord', '00000000-0000-0000-0000-0000000000d1/a_coord.jpg', null);
+select tests.fails($$update public.attendance_media set selfie_in_path = '00000000-0000-0000-0000-0000000000d1/other.jpg' where attendance_id = 'a_coord'$$,
+                   'tidak bisa diganti', 'clock-in selfie cannot be swapped while the shift is open');
+update public.attendance_media set selfie_out_path = '00000000-0000-0000-0000-0000000000d1/a_coord-out.jpg' where attendance_id = 'a_coord';
+select tests.ok((select selfie_out_path is not null from public.attendance_media where attendance_id = 'a_coord'), 'clock-out selfie can still be added');
+reset role;
+
+select tests.as_user(null);
+select tests.ok((public.build_daily_report(public.wib(now())::date + 5)->>'planned')::int = 0,
+                'daily report: a shift taken off the roster by a replacement is not counted as planned');
+
 \echo 'ALL SMOKE CHECKS PASSED'

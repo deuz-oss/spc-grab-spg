@@ -152,6 +152,7 @@ export default function RequestDetailScreen({ route, navigation }: Props) {
                   title={`${profileOf(orig.spgId)?.name ?? 'SPG'} · ${orig.shiftDate}`}
                   subtitle={`${REPLACEMENT_REASON[r.reason]} · batas ${fmtDateTime(r.dueAt)}`}
                   emphasis={{ color: late ? C.accent : C.warn, label: late ? 'Lewat SLA' : 'Belum diisi' }}
+                  numberOfLines={2}
                   trailing={editable ? <Btn title="Isi pengganti" small onPress={() => startReplacement(orig)} /> : undefined}
                 />
               </Card>

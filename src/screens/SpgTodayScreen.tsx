@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
 import { Btn, Card, Empty } from '../components/ui';
 import { EvidencePhotoField } from '../components/EvidencePhotoField';
@@ -9,19 +8,26 @@ import { showDialog, showToast } from '../components/dialog';
 import { useCurrentUser, useStore } from '../store/useStore';
 import { useNow } from '../components/useNow';
 import { venueFence } from '../utils/geo';
+import { LocationPermissionDeniedError, requestCurrentCoords, type Coords } from '../utils/location';
 import { programDayKey } from '../utils/period';
 import { fmtDayLong, fmtDayShort, fmtDurShort, fmtTime } from '../utils/format';
 import { C, ELEV, F, SP, T, TOUCH } from '../theme';
 import type { Attendance, Campaign, KpiField, Shift, Venue } from '../types';
 
-async function currentPosition(): Promise<{ lat: number; lng: number; mocked: boolean } | null> {
-  const perm = await Location.requestForegroundPermissionsAsync();
-  if (perm.status !== 'granted') {
-    showDialog('Izin Lokasi Diperlukan', 'Clock-in membutuhkan lokasi HP. Izinkan lokasi untuk aplikasi ini di Pengaturan.');
-    return null;
+/**
+ * Position for clock-in / clock-out. A high-accuracy GPS fix can stall indefinitely inside a mall, so
+ * this goes through requestCurrentCoords: bounded high accuracy, then a network-based fallback.
+ */
+async function currentPosition(): Promise<Coords | null> {
+  try {
+    return await requestCurrentCoords();
+  } catch (e) {
+    if (e instanceof LocationPermissionDeniedError) {
+      showDialog('Izin Lokasi Diperlukan', 'Clock-in membutuhkan lokasi HP. Izinkan lokasi untuk aplikasi ini di Pengaturan.');
+      return null;
+    }
+    throw new Error('Lokasi HP belum didapat. Pastikan GPS menyala, pindah ke dekat pintu masuk, lalu coba lagi.');
   }
-  const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-  return { lat: p.coords.latitude, lng: p.coords.longitude, mocked: !!p.mocked };
 }
 
 async function takeSelfie(): Promise<string | null> {
@@ -87,7 +93,8 @@ function ShiftCard({ shift, venue, campaign, attendance }: { shift: Shift; venue
         label: 'Clock-out',
         onPress: async () => {
           try {
-            const pos = (await currentPosition()) ?? { lat: attendance.clockInLat, lng: attendance.clockInLng, mocked: false };
+            // No fix (denied, or timed out indoors) must not block clock-out: fall back to the clock-in spot.
+            const pos = (await currentPosition().catch(() => null)) ?? { lat: attendance.clockInLat, lng: attendance.clockInLng, mocked: false };
             await clockOut(attendance.id, pos);
             showToast('Clock-out tercatat');
           } catch (e) {

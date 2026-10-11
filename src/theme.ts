@@ -108,6 +108,12 @@ export function toneOf(color: string): { fg: string; bg: string } {
 /** Target sentuh minimum (dp) — tombol, chip, baris yang bisa diketuk. */
 export const TOUCH = 48;
 
+/**
+ * Widest a screen's content gets (web on a desktop, tablets). Phone screens never reach it; on a
+ * 1280+ monitor the PIC's queues no longer stretch into 600 px buttons and 150-character lines.
+ */
+export const MAX_CONTENT_WIDTH = 960;
+
 /** Warna status skorkartu (On Track / Perlu Perhatian / Di Bawah Target) — lihat PRD §9 */
 export const STATUS_COLOR = {
   on_track: C.ok,

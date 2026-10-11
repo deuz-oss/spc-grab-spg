@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
+import { enableScreens } from 'react-native-screens';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import {
@@ -16,7 +17,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { APP_NAME, FIELD_ROLES } from './src/config';
-import { C, F } from './src/theme';
+import { C, F, MAX_CONTENT_WIDTH } from './src/theme';
 import { DialogHost } from './src/components/dialog';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { TrackingWatcher } from './src/components/TrackingWatcher';
@@ -44,6 +45,11 @@ import type { DataStackParams } from './src/screens/data/types';
 
 installGlobalErrorHandlers();
 
+// Web: react-native-screens is off by default, so inactive tabs stay rendered underneath the active
+// one — aria-hidden, yet still focusable, and Tab walked keyboard users through invisible screens.
+// Enabled, an inactive tab is display:none. Native platforms already have it on.
+if (Platform.OS === 'web') enableScreens(true);
+
 const Tabs = createBottomTabNavigator();
 const ReqStack = createNativeStackNavigator<RequestsStackParams>();
 const DataStack = createNativeStackNavigator<DataStackParams>();
@@ -66,9 +72,13 @@ const header = {
   headerTitleStyle: { fontFamily: F.bold },
 };
 
+/** Screen content centred at MAX_CONTENT_WIDTH on wide screens; headers and the tab bar stay full width. */
+const centred = { width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' } as const;
+const stackOptions = { ...header, contentStyle: { ...centred, backgroundColor: C.bg } };
+
 function RequestsTab() {
   return (
-    <ReqStack.Navigator screenOptions={header}>
+    <ReqStack.Navigator screenOptions={stackOptions}>
       <ReqStack.Screen name="Requests" component={RequestsScreen} options={{ title: 'Request' }} />
       <ReqStack.Screen name="RequestForm" component={RequestFormScreen} options={{ title: 'Request baru' }} />
       <ReqStack.Screen name="RequestDetail" component={RequestDetailScreen} options={{ title: 'Detail request' }} />
@@ -78,7 +88,7 @@ function RequestsTab() {
 
 function DataTab() {
   return (
-    <DataStack.Navigator screenOptions={header}>
+    <DataStack.Navigator screenOptions={stackOptions}>
       <DataStack.Screen name="DataHome" component={DataHomeScreen} options={{ title: 'Data' }} />
       <DataStack.Screen name="SpgDetail" component={SpgDetailScreen} options={{ title: 'Detail akun' }} />
       <DataStack.Screen name="AccountForm" component={AccountFormScreen} options={{ title: 'Akun baru' }} />
@@ -102,9 +112,11 @@ function Shell() {
       screenOptions={({ route }) => ({
         ...header,
         headerShown: false,
-        sceneStyle: { paddingTop: insets.top, backgroundColor: C.bg },
+        sceneStyle: { paddingTop: insets.top, backgroundColor: C.bg, ...centred },
         headerTitle: APP_NAME,
         tabBarActiveTintColor: C.primary,
+        // The library's default inactive grey is ~3:1 on white; muted slate is 7:1.
+        tabBarInactiveTintColor: C.muted,
         tabBarLabelStyle: { fontFamily: F.semi },
         tabBarIcon: ({ focused, color, size }) => {
           const [on, off] = ICONS[route.name] ?? ['ellipse', 'ellipse-outline'];
@@ -153,11 +165,12 @@ function Root() {
   }
   if (!me) return <LoginScreen />;
   if (needsConsent(me)) return <ConsentScreen />;
+  // The page colour behind the centred content column (wide screens) — the navigator itself is transparent.
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
       <TrackingWatcher />
       <Shell />
-    </>
+    </View>
   );
 }
 

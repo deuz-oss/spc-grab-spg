@@ -49,6 +49,8 @@ export interface Campaign {
   name: string;
   type: 'user' | 'merchant' | 'driver' | 'launch' | 'event';
   kpiFields: KpiField[];
+  startsOn: string; // YYYY-MM-DD
+  endsOn: string | null;
   active: boolean;
 }
 

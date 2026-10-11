@@ -102,6 +102,9 @@ export async function discardLocalPhoto(uri: string): Promise<void> {
 /** Whether a queued photo's local file still exists (reinstall or cache clear can remove it). */
 export async function localPhotoExists(uri: string): Promise<boolean> {
   try {
+    // Web has no file system (getInfoAsync throws there): the picker hands over a data: or blob: URI,
+    // which is readable for as long as the page holds it — after a reload a blob: URI is gone.
+    if (Platform.OS === 'web') return (await fetch(uri)).ok;
     return (await FileSystem.getInfoAsync(uri)).exists;
   } catch {
     return false;

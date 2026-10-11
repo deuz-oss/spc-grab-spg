@@ -36,7 +36,7 @@ export function DateField({
   const bad = value !== '' && !isDate(value);
   return (
     <Field label={label} required={required} error={bad ? 'Format tanggal: TTTT-BB-HH, contoh 2026-11-02' : null}>
-      <Input value={value} onChangeText={onChange} placeholder="2026-11-02" autoCapitalize="none" maxLength={10} />
+      <Input value={value} onChangeText={onChange} placeholder="mis. 2026-11-02" autoCapitalize="none" maxLength={10} />
     </Field>
   );
 }

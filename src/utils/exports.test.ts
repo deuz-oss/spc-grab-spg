@@ -36,7 +36,7 @@ const base: ExportData = {
   }],
   venues: [{ id: 'v1', cityId: 'sby', name: 'TP', address: '', lat: 0, lng: 0, radiusM: 150 }],
   cities: [{ id: 'sby', name: 'Kota Surabaya', province: 'Jatim', capability: 'Strong' }],
-  campaigns: [{ id: 'c1', name: 'Food', type: 'user', kpiFields: [], active: true }],
+  campaigns: [{ id: 'c1', name: 'Food', type: 'user', kpiFields: [], startsOn: '2026-10-01', endsOn: null, active: true }],
 };
 
 test('WIB clock from epoch ms', () => {

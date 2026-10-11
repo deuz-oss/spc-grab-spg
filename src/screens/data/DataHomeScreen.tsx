@@ -45,7 +45,7 @@ export default function DataHomeScreen({ navigation }: Props) {
         {tabs.map((t) => <Chip key={t.key} label={t.label} active={tab === t.key} onPress={() => setTab(t.key)} />)}
       </View>
       {(tab === 'spg' || tab === 'staff') && (
-        <View style={{ marginBottom: SP.md }}><Input placeholder="Cari nama atau username" value={q} onChangeText={setQ} /></View>
+        <View style={{ marginBottom: SP.md }}><Input placeholder="Cari nama atau username" accessibilityLabel="Cari akun" value={q} onChangeText={setQ} /></View>
       )}
 
       {tab === 'spg' && (

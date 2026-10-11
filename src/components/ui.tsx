@@ -2,6 +2,7 @@ import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {
   ActivityIndicator,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -106,7 +107,10 @@ export function Chip({
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ selected: !!active, disabled }}
+      // aria-* props, not accessibilityState: react-native-web ignores accessibilityState, so on web the
+      // selected state was never announced. Native maps aria-selected; on web a toggle button is pressed.
+      {...(Platform.OS === 'web' ? ({ 'aria-pressed': !!active } as object) : { 'aria-selected': !!active })}
+      aria-disabled={disabled}
       style={{
         minHeight: TOUCH,
         justifyContent: 'center',
@@ -162,7 +166,8 @@ export function Btn({
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
-      accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
+      aria-disabled={!!(disabled || loading)}
+      aria-busy={!!loading}
       style={{
         backgroundColor: bg,
         borderWidth: variant === 'outline' ? 1.5 : 0,
@@ -218,13 +223,21 @@ export function Field({
   required?: boolean;
   error?: string | null;
 }) {
+  // The label is a sibling Text, which a screen reader does not tie to the input — so an Input
+  // directly inside gets the label (and "wajib") as its accessible name unless it brings its own.
+  const name = required ? `${label} (wajib)` : label;
+  const labelled = React.Children.map(children, (child) =>
+    React.isValidElement<TextInputProps>(child) && child.type === Input && !child.props.accessibilityLabel
+      ? React.cloneElement(child, { accessibilityLabel: name })
+      : child,
+  );
   return (
     <View style={{ gap: 7 }}>
       <Text style={T.label}>
         {label}
         {required ? <Text style={[T.label, { color: C.muted }]}> (wajib)</Text> : null}
       </Text>
-      {children}
+      {labelled}
       {error ? (
         <View role="alert" style={{ flexDirection: 'row', alignItems: 'center', gap: SP.xs }}>
           <Ionicons name="alert-circle" size={16} color={C.dangerStrong} />
@@ -337,7 +350,7 @@ export function ListRow({
     ? {
         accessibilityRole: (selected !== undefined ? 'checkbox' : 'button') as 'checkbox' | 'button',
         accessibilityLabel: [title, subtitle, emphasis?.label, meta].filter(Boolean).join(', '),
-        accessibilityState: selected !== undefined ? { checked: selected } : undefined,
+        'aria-checked': selected,
       }
     : {};
   return (

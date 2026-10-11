@@ -13,6 +13,7 @@ import { discardLocalPhoto, localPhotoExists, persistPhotoLocally, uploadPhoto }
 import { KPI_PROOF_BUCKET, PROFILE_PHOTO_BUCKET, SELFIE_BUCKET } from '../utils/photoRef';
 import { uid } from '../utils/uuid';
 import type { ExportData } from '../utils/exports';
+import { fetchAllPages } from '../utils/paging';
 import { drainQueue, isNetworkError, queueReason, settle, type ReplayResult } from './replay';
 import {
   mapAttendance, mapCampaign, mapCity, mapDailyReport, mapException, mapKpi, mapLivePosition, mapProfile, mapReplacement,
@@ -57,6 +58,8 @@ export interface StoreState {
   /** Set while running from the on-device snapshot (no server reachable at start). */
   offlineSnapshotAt: number | null;
   lastSyncAt: number | null;
+  /** Why the user is back on the login screen without signing out (e.g. account deactivated). */
+  loginNotice: string | null;
 
   init(): Promise<void>;
   signIn(username: string, password: string): Promise<string | null>;
@@ -66,7 +69,8 @@ export interface StoreState {
   clockOut(attendanceId: string, pos: Pos): Promise<void>;
   submitKpi(shiftId: string, fieldKey: string, value: number, proofUri?: string): Promise<void>;
   syncQueue(): Promise<{ synced: number; failed: QueuedOp[] }>;
-  validateShift(shiftId: string): Promise<void>;
+  /** Validates shifts in order; resolves to how many were validated, or throws at the first refusal. */
+  validateShifts(shiftIds: string[]): Promise<number>;
   resolveException(id: number, status: 'resolved' | 'waived', note: string): Promise<void>;
   publishDailyReport(date: string): Promise<void>;
   giveConsent(): Promise<void>;
@@ -84,7 +88,7 @@ export interface StoreState {
   setPassword(userId: string, password: string): Promise<void>;
   setActive(userId: string, active: boolean): Promise<void>;
   fetchLivePositions(): Promise<LivePosition[]>;
-  fetchPhones(): Promise<Record<string, string>>;
+  fetchPhone(userId: string): Promise<string | null>;
   fetchExportData(from: string, to: string): Promise<ExportData>;
 }
 
@@ -126,20 +130,23 @@ export const useStore = create<StoreState>((set, get) => {
     const role = (meRow.data as { role: Role }).role;
     const monitor = MONITOR_ROLES.includes(role);
     const none = Promise.resolve({ data: [] as Record<string, unknown>[], error: null });
+    // Every list is read page by page (utils/paging.ts): one PostgREST response stops at 1000 rows.
     const [me, profiles, cities, venues, campaigns, requests, shifts, atts, kpis, excs, trs, reps, reports] = await Promise.all([
       Promise.resolve(meRow),
       // Staff need inactive accounts too (to reactivate them); RLS still scopes who sees whom.
-      monitor ? supabase.from('profiles').select('*').order('name') : supabase.from('profiles').select('*').eq('active', true),
-      supabase.from('cities').select('*').order('name'),
-      supabase.from('venues').select('*'),
-      supabase.from('campaigns').select('*'),
-      supabase.from('requests').select('*').gte('end_date', sinceDate),
-      supabase.from('shifts').select('*').gte('shift_date', sinceDate),
-      supabase.from('attendances').select('*').gte('clock_in_at', since.toISOString()),
-      supabase.from('kpi_logs').select('*').gte('logged_at', since.toISOString()),
-      supabase.from('exceptions').select('*').or(`status.eq.open,detected_at.gte.${since.toISOString()}`),
-      supabase.from('trainings').select('*'),
-      monitor ? supabase.from('replacements').select('*').gte('requested_at', since.toISOString()) : none,
+      fetchAllPages((a, b) => (monitor ? supabase.from('profiles').select('*') : supabase.from('profiles').select('*').eq('active', true))
+        .order('name').order('id').range(a, b)),
+      fetchAllPages((a, b) => supabase.from('cities').select('*').order('name').order('id').range(a, b)),
+      fetchAllPages((a, b) => supabase.from('venues').select('*').order('id').range(a, b)),
+      fetchAllPages((a, b) => supabase.from('campaigns').select('*').order('id').range(a, b)),
+      fetchAllPages((a, b) => supabase.from('requests').select('*').gte('end_date', sinceDate).order('id').range(a, b)),
+      fetchAllPages((a, b) => supabase.from('shifts').select('*').gte('shift_date', sinceDate).order('id').range(a, b)),
+      fetchAllPages((a, b) => supabase.from('attendances').select('*').gte('clock_in_at', since.toISOString()).order('id').range(a, b)),
+      fetchAllPages((a, b) => supabase.from('kpi_logs').select('*').gte('logged_at', since.toISOString()).order('id').range(a, b)),
+      fetchAllPages((a, b) => supabase.from('exceptions').select('*').or(`status.eq.open,detected_at.gte.${since.toISOString()}`)
+        .order('id').range(a, b)),
+      fetchAllPages((a, b) => supabase.from('trainings').select('*').order('id').range(a, b)),
+      monitor ? fetchAllPages((a, b) => supabase.from('replacements').select('*').gte('requested_at', since.toISOString()).order('id').range(a, b)) : none,
       monitor ? supabase.from('daily_reports').select('*').gte('report_date', sinceDate).order('report_date', { ascending: false }) : none,
     ]);
     for (const r of [me, profiles, cities, venues, campaigns, requests, shifts, atts, kpis, excs, trs, reps, reports]) fail(r.error);
@@ -244,6 +251,7 @@ export const useStore = create<StoreState>((set, get) => {
   return {
     ready: false, me: null, profiles: [], cities: [], venues: [], campaigns: [], requests: [], shifts: [],
     attendances: [], kpiLogs: [], exceptions: [], trainings: [], replacements: [], dailyReports: [], queue: [], syncing: false, offlineSnapshotAt: null, lastSyncAt: null,
+    loginNotice: null,
 
     async init() {
       const { data, error } = await supabase.auth.getSession();
@@ -253,6 +261,13 @@ export const useStore = create<StoreState>((set, get) => {
       set({ queue: await loadQueue(userId) });
       try {
         await loadAll(userId);
+        // A deactivated account keeps a valid session token until it expires; RLS already shows it
+        // nothing, so say why instead of opening an empty app. The offline queue stays on the phone.
+        if (!get().me?.active) {
+          await get().signOut();
+          set({ ready: true, loginNotice: 'Akun Anda dinonaktifkan. Hubungi PIC SPC.' });
+          return;
+        }
         void get().syncQueue();
       } catch {
         // No server: open from the last snapshot instead of signing the user out.
@@ -374,9 +389,22 @@ export const useStore = create<StoreState>((set, get) => {
       }
     },
 
-    async validateShift(shiftId) {
-      fail((await supabase.rpc('validate_shift', { p_shift: shiftId })).error);
-      await loadAll(get().me!.id);
+    async validateShifts(shiftIds) {
+      // One RPC per shift (each is checked on its own), but one reload at the end — "Validasi semua"
+      // used to reload every table after every shift. Stops at the first refusal; reloads either way.
+      let done = 0;
+      try {
+        for (const id of shiftIds) {
+          fail((await supabase.rpc('validate_shift', { p_shift: id })).error);
+          done += 1;
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        throw new Error(shiftIds.length > 1 ? `${done} dari ${shiftIds.length} shift tervalidasi. ${msg}` : msg);
+      } finally {
+        await loadAll(get().me!.id).catch(() => undefined);
+      }
+      return done;
     },
 
     async resolveException(id, status, note) {
@@ -497,38 +525,46 @@ export const useStore = create<StoreState>((set, get) => {
 
     async fetchExportData(from, to) {
       // Exports may reach past the 45 days loaded at login, so they read the range from the server.
-      const sh = await supabase.from('shifts').select('*').gte('shift_date', from).lte('shift_date', to);
+      // Billing and payroll come from these rows: read every page, never just the first 1000.
+      const sh = await fetchAllPages((a, b) => supabase.from('shifts').select('*').gte('shift_date', from).lte('shift_date', to)
+        .order('id').range(a, b));
       fail(sh.error);
-      const shifts = (sh.data ?? []).map(mapShift);
+      const shifts = sh.data.map(mapShift);
       const ids = shifts.map((x) => x.id);
       const reqIds = [...new Set(shifts.map((x) => x.requestId))];
+      // 200 ids keep the `in` filter well inside URL limits.
       const chunk = <T,>(a: T[]) => Array.from({ length: Math.ceil(a.length / 200) }, (_, i) => a.slice(i * 200, i * 200 + 200));
       const atts: Record<string, unknown>[] = [];
       const kpis: Record<string, unknown>[] = [];
       const excs: Record<string, unknown>[] = [];
       for (const part of chunk(ids)) {
         const [a, k, e] = await Promise.all([
-          supabase.from('attendances').select('*').in('shift_id', part),
-          supabase.from('kpi_logs').select('*').in('shift_id', part),
-          supabase.from('exceptions').select('*').in('shift_id', part),
+          fetchAllPages((x, y) => supabase.from('attendances').select('*').in('shift_id', part).order('id').range(x, y)),
+          fetchAllPages((x, y) => supabase.from('kpi_logs').select('*').in('shift_id', part).order('id').range(x, y)),
+          fetchAllPages((x, y) => supabase.from('exceptions').select('*').in('shift_id', part).order('id').range(x, y)),
         ]);
         fail(a.error); fail(k.error); fail(e.error);
-        atts.push(...(a.data ?? [])); kpis.push(...(k.data ?? [])); excs.push(...(e.data ?? []));
+        atts.push(...a.data); kpis.push(...k.data); excs.push(...e.data);
       }
-      const reqs = reqIds.length ? await supabase.from('requests').select('*').in('id', reqIds) : { data: [], error: null };
-      fail(reqs.error);
+      const reqRows: Record<string, unknown>[] = [];
+      for (const part of chunk(reqIds)) {
+        const r = await supabase.from('requests').select('*').in('id', part);
+        fail(r.error);
+        reqRows.push(...(r.data ?? []));
+      }
       const st = get();
       return {
-        shifts, requests: (reqs.data ?? []).map(mapRequest),
+        shifts, requests: reqRows.map(mapRequest),
         attendances: atts.map((r) => ({ ...mapAttendance(r), route: [] })), kpiLogs: kpis.map(mapKpi), exceptions: excs.map(mapException),
         profiles: st.profiles, venues: st.venues, cities: st.cities, campaigns: st.campaigns,
       };
     },
 
-    async fetchPhones() {
-      const { data, error } = await supabase.from('profile_contacts').select('user_id, phone');
+    async fetchPhone(userId) {
+      // One person's number, not the whole contact table (personal data: fetch only what is shown).
+      const { data, error } = await supabase.from('profile_contacts').select('phone').eq('user_id', userId).maybeSingle();
       fail(error);
-      return Object.fromEntries(((data ?? []) as { user_id: string; phone: string }[]).map((r) => [r.user_id, r.phone]));
+      return data?.phone ?? null;
     },
   };
 });

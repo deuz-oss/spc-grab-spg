@@ -32,7 +32,7 @@ export default function SpgDetailScreen({ route }: Props) {
 
   useEffect(() => {
     let live = true;
-    s.fetchPhones().then((m) => live && setPhone(m[route.params.id] ?? '')).catch(() => live && setPhone(''));
+    s.fetchPhone(route.params.id).then((p) => live && setPhone(p ?? '')).catch(() => live && setPhone(''));
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route.params.id]);
