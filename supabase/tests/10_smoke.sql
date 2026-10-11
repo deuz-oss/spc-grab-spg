@@ -309,15 +309,21 @@ reset role;
 
 -- ---------------------------------------------------------------- auto-close and retention (service context)
 select tests.as_user(null);
+-- Its own SPG: "17 hours ago" is today in WIB after 17:00, and spg3 already has a shift today
+-- (one live shift per SPG per day), so reusing spg3 failed whenever the suite ran in the evening.
+insert into auth.users (id, email, raw_user_meta_data) values ('00000000-0000-0000-0000-0000000000e5', 'spg5@internal.spc', '{"username":"spg5"}');
+update public.profiles set active = true, role = 'spg', grade = 'B', contract_type = 'daily_worker', city_id = 'kota-surabaya',
+       consent_version = 'test-v1' where username = 'spg5';
+insert into public.trainings (id, spg_id, campaign_id, score) values ('tr5', '00000000-0000-0000-0000-0000000000e5', 'c_food', 80);
 insert into public.requests (id, campaign_id, city_id, venue_id, grade, headcount, start_date, end_date, shift_hours, package)
 values ('r_old', 'c_food', 'kota-surabaya', 'v_tp', 'C', 1, current_date - 3, current_date + 3, 8, 'daily');
 insert into public.shifts (id, request_id, venue_id, spg_id, shift_date, planned_start, planned_end)
-  select 's_old', 'r_old', 'v_tp', '00000000-0000-0000-0000-0000000000e3',
+  select 's_old', 'r_old', 'v_tp', '00000000-0000-0000-0000-0000000000e5',
          public.wib(now() - interval '17 hours')::date,
          (public.wib(now() - interval '17 hours') - interval '1 minute')::time, '23:59';
 insert into public.attendances (id, shift_id, user_id, clock_in_at, clock_in_lat, clock_in_lng)
-  values ('a_old', 's_old', '00000000-0000-0000-0000-0000000000e3', now() - interval '17 hours', -7.2625, 112.7389);
-insert into public.attendance_media values ('a_old', '00000000-0000-0000-0000-0000000000e3/a_old-in.jpg', null);
+  values ('a_old', 's_old', '00000000-0000-0000-0000-0000000000e5', now() - interval '17 hours', -7.2625, 112.7389);
+insert into public.attendance_media values ('a_old', '00000000-0000-0000-0000-0000000000e5/a_old-in.jpg', null);
 select tests.ok(public.auto_close_attendances() = 1, 'attendance open > 16 h is auto-closed');
 select tests.ok(tests.count_rows($$select 1 from public.exceptions where shift_id = 's_old' and type = 'no_clock_out'$$) = 1,
                 'auto-close raises a no-clock-out exception');
