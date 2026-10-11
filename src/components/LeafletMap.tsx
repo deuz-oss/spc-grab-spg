@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
 import WebView from 'react-native-webview';
 import { C, R, T } from '../theme';
+import { escapeHtml } from '../utils/html';
 
 export interface MapMarker {
   lat: number;
@@ -50,7 +51,8 @@ export function LeafletMap({
 }) {
   const data = {
     polyline: polyline ?? [],
-    markers,
+    // Tooltips are HTML: labels carry user-editable names (profiles, venues), so they go in as text.
+    markers: markers.map((m) => ({ ...m, label: escapeHtml(m.label ?? '') })),
     center: center ?? polyline?.[0] ?? markers[0] ?? { lat: -6.2, lng: 106.816666 },
     zoom,
     fit: (polyline?.length ?? 0) > 1 || markers.length > 1,
@@ -96,8 +98,10 @@ if(D.fit){
         {React.createElement('iframe', {
           srcDoc: html,
           style: { border: 0, width: '100%', height: '100%' },
-          sandbox: 'allow-scripts allow-same-origin',
-          title: 'map',
+          // No allow-same-origin: a srcdoc frame with it shares the app's origin, and with it the
+          // signed-in session in localStorage. Leaflet (CORS + SRI) and tile images load without it.
+          sandbox: 'allow-scripts',
+          title: 'Peta',
         })}
       </View>
     );

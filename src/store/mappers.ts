@@ -32,6 +32,7 @@ export function mapCampaign(r: Row): Campaign {
   const fields = Array.isArray(r.kpi_fields) ? (r.kpi_fields as KpiField[]) : [];
   return {
     id: String(r.id), name: String(r.name), type: r.type as Campaign['type'], active: Boolean(r.active),
+    startsOn: String(r.starts_on ?? ''), endsOn: (r.ends_on as string | null) ?? null,
     kpiFields: fields.map((f) => ({ key: f.key, label: f.label ?? f.key, unit: f.unit ?? '', proof_required: !!f.proof_required })),
   };
 }

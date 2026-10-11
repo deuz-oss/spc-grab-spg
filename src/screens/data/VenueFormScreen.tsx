@@ -71,7 +71,7 @@ export default function VenueFormScreen({ route, navigation }: Props) {
       <Field label="Nama venue" required><Input value={name} onChangeText={setName} placeholder="mis. Tunjungan Plaza 3, Lobby" /></Field>
       <Field label="Alamat"><Input value={address} onChangeText={setAddress} multiline /></Field>
       <Field label="Koordinat (lat, lng)" required error={coords && !pos ? 'Format: -7.2625, 112.7389' : null}>
-        <Input value={coords} onChangeText={setCoords} placeholder="-7.2625, 112.7389" autoCapitalize="none" />
+        <Input value={coords} onChangeText={setCoords} placeholder="mis. -7.2625, 112.7389" autoCapitalize="none" />
       </Field>
       <Btn title="Pakai lokasi saya sekarang" small variant="outline" onPress={here} />
       <Field label="Radius geofence (meter)" required>

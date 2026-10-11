@@ -10,12 +10,13 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => useStore.getState().loginNotice);
 
   const submit = async () => {
     if (!username.trim() || !password) return setError('Isi username dan password.');
     setBusy(true);
     setError(null);
+    useStore.setState({ loginNotice: null });
     const err = await signIn(username, password);
     setBusy(false);
     if (err) setError(err);

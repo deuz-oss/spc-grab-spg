@@ -69,15 +69,12 @@ export default function OpsTodayScreen() {
 
   const validate = async (ids: string[]) => {
     setBusy(ids.length > 1 ? 'all' : ids[0]!);
-    let ok = 0;
     try {
-      for (const id of ids) {
-        await s.validateShift(id);
-        ok += 1;
-      }
+      const ok = await s.validateShifts(ids);
       showToast(ok > 1 ? `${ok} shift divalidasi` : 'Shift divalidasi');
     } catch (err) {
-      showDialog('Validasi Terhenti', `${ok} berhasil. ${err instanceof Error ? err.message : String(err)}`);
+      // Shifts before the refused one are validated; the reload shows which are left.
+      showDialog('Validasi Terhenti', err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(null);
     }
@@ -140,6 +137,7 @@ export default function OpsTodayScreen() {
                 <>
                   <Input
                     placeholder="Catatan wajib: apa yang dicek dan hasilnya"
+                    accessibilityLabel={`Catatan untuk exception ${EXCEPTION_LABEL[e.type]} ${w.name} (wajib)`}
                     value={notes[e.id] ?? ''}
                     onChangeText={(t) => setNotes({ ...notes, [e.id]: t })}
                   />

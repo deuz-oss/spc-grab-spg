@@ -941,6 +941,7 @@ export type Database = {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
       }
+      is_api_caller: { Args: never; Returns: boolean }
       is_field: { Args: never; Returns: boolean }
       is_ops: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }

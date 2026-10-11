@@ -45,6 +45,14 @@ export default function ReportsScreen() {
     return key;
   };
 
+  // Publishing goes to the client and cannot be taken back (published reports are frozen), so ask first.
+  const confirmPublish = (date: string, build: boolean) =>
+    showDialog(
+      `Terbitkan laporan ${fmtDayLong(date)}?`,
+      `${build ? 'Laporan dibuat dari data saat ini lalu langsung terbit. ' : ''}Grab langsung bisa membacanya, dan laporan yang sudah terbit tidak bisa diubah lagi.`,
+      [{ label: 'Batal' }, { label: 'Terbitkan', onPress: () => void publish(date) }],
+    );
+
   const publish = async (date: string) => {
     setBusy(`pub-${date}`);
     try {
@@ -106,7 +114,7 @@ export default function ReportsScreen() {
       )}
       {r.totals.open_exceptions > 0 && <Muted>{r.totals.open_exceptions} exception masih terbuka saat laporan dibuat.</Muted>}
       {isOps && !r.publishedAt && (
-        <Btn title="Terbitkan ke Grab" small onPress={() => publish(r.date)} loading={busy === `pub-${r.date}`} />
+        <Btn title="Terbitkan ke Grab" small onPress={() => confirmPublish(r.date, false)} loading={busy === `pub-${r.date}`} />
       )}
     </Card>
   );
@@ -119,7 +127,7 @@ export default function ReportsScreen() {
       {isOps && !hasYesterday && (
         <Card style={{ marginBottom: SP.sm }}>
           <Muted>Laporan {yesterday} belum ada.</Muted>
-          <Btn title={`Buat & terbitkan ${yesterday}`} small onPress={() => publish(yesterday)} loading={busy === `pub-${yesterday}`} />
+          <Btn title={`Buat & terbitkan ${yesterday}`} small onPress={() => confirmPublish(yesterday, true)} loading={busy === `pub-${yesterday}`} />
         </Card>
       )}
       {s.dailyReports.length === 0 && !isOps && <Empty text="Belum ada laporan yang terbit." icon="document-outline" />}

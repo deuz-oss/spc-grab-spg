@@ -30,8 +30,9 @@ export default function CampaignFormScreen({ route, navigation }: Props) {
   const [name, setName] = useState(existing?.name ?? '');
   const [type, setType] = useState<Campaign['type']>(existing?.type ?? 'user');
   const [fields, setFields] = useState<KpiField[]>(existing?.kpiFields ?? []);
-  const [startsOn, setStartsOn] = useState(() => programDayKey(Date.now()));
-  const [endsOn, setEndsOn] = useState('');
+  const [startsOn, setStartsOn] = useState(() => existing?.startsOn || programDayKey(Date.now()));
+  // Start from the saved end date: an empty field is saved as "no end date".
+  const [endsOn, setEndsOn] = useState(existing?.endsOn ?? '');
   const [active, setActive] = useState(existing?.active ?? true);
   const [label, setLabel] = useState('');
   const [unit, setUnit] = useState('');
@@ -52,6 +53,7 @@ export default function CampaignFormScreen({ route, navigation }: Props) {
     if (!fields.length) return showDialog('KPI Kosong', 'Tambahkan minimal satu KPI.');
     if (!existing && !isDate(startsOn)) return showDialog('Tanggal Mulai', 'Format TTTT-BB-HH.');
     if (endsOn && !isDate(endsOn)) return showDialog('Tanggal Selesai', 'Format TTTT-BB-HH atau kosongkan.');
+    if (endsOn && endsOn < startsOn) return showDialog('Tanggal Selesai', `Tanggal selesai tidak boleh sebelum tanggal mulai (${startsOn}).`);
     setBusy(true);
     try {
       await s.saveCampaign({ id: existing?.id, name: name.trim(), type, kpiFields: fields, startsOn, endsOn: endsOn || null, active });

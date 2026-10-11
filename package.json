@@ -44,6 +44,7 @@
     "@types/react-native-web": "^0.19.2",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~57.0.2",
+    "playwright": "~1.63.0",
     "tsx": "^4.23.13",
     "typescript": "~6.0.3"
   },
@@ -56,6 +57,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "test:db": "./scripts/test-db.sh",
+    "test:db:docker": "bash scripts/test-db-docker.sh",
     "gen:types": "npx supabase gen types typescript --linked --schema public > src/lib/database.types.ts",
     "build:dev": "npx eas-cli build --profile development --platform android",
     "build:preview": "npx eas-cli build --profile preview --platform android",

@@ -33,6 +33,7 @@ Migrations in `supabase/migrations/`, applied in filename order to a Supabase pr
 | `0006_core_loop.sql` | Request lifecycle (new → staffed → running → closed, SLA stop at `staffed_at`), replacements (`open_replacement`, fill by scheduling), consent gate on clock-in with server-stamped time, SPG photo column, FK indexes, per-query `auth.uid()` |
 | `0007_profile_photos_storage.sql` | Private `profile-photos` bucket: staff upload, Grab can see (roster). Supabase-only |
 | `0008_campaign_kpi_lock.sql` | KPI fields fixed once SPG have logged against them |
+| `0009_audit_hardening.sql` | Audit 11 Oct 2026 (`docs/audit/`): API callers cannot set shift status/validation/overtime (billing), request SLA fields, the clock-in selfie, or another person's consent; daily report no longer counts replaced shifts. Applied to staging 11 Oct 2026 |
 | `0005_hardening.sql` | From the Supabase security advisor: signed-out callers execute no function, trigger functions are not callable over the API, fixed `search_path` everywhere |
 
 Rules that live in the database, not the phone:
@@ -50,7 +51,7 @@ Rules that live in the database, not the phone:
 ./scripts/test-db.sh
 ```
 
-Spins up a throwaway Postgres (needs PostgreSQL 15+ server binaries), applies the stub of Supabase's `auth`
+Spins up a throwaway Postgres (needs PostgreSQL 15+ server binaries; without them, `npm run test:db:docker` runs the same script in `postgres:16`), applies the stub of Supabase's `auth`
 schema, every migration except storage, and runs `supabase/tests/10_smoke.sql`. The run stops at the first
 failed check. CI runs the same script on every push.
 
@@ -72,7 +73,7 @@ Reused unchanged from `spc-nc-workforce`: UI kit, dialogs, theme, offline replay
 location task, tracking watcher, offline snapshot, error reporting. Rewritten for Grab: types, store, mappers,
 storage (private `selfies` / `kpi-proof` buckets), geofence helper, screens.
 
-Checks: `npm run typecheck`, `npm run lint`, `npm test` (66 unit tests), `npm run test:db` (64 database checks).
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (73 unit tests), `npm run test:db` (79 database checks).
 CI runs all of them plus Expo doctor and a web bundle on every push.
 
 Tabs per role: SPG/coordinator — Hari Ini, Jadwal (coordinator also Peta), Profil, after a one-time UU PDP consent.

@@ -19,6 +19,13 @@ test('campaign: KPI template defaults are filled', () => {
   assert.deepEqual(c.kpiFields, [{ key: 'downloads', label: 'downloads', unit: '', proof_required: true }]);
 });
 
+test('campaign: dates are kept, so editing a campaign does not clear its end date', () => {
+  const c = mapCampaign({ id: 'c', name: 'Food', type: 'user', active: true, kpi_fields: [], starts_on: '2026-10-01', ends_on: '2026-12-31' });
+  assert.equal(c.startsOn, '2026-10-01');
+  assert.equal(c.endsOn, '2026-12-31');
+  assert.equal(mapCampaign({ id: 'c', name: 'Food', type: 'user', active: true, kpi_fields: [], starts_on: '2026-10-01', ends_on: null }).endsOn, null);
+});
+
 test('shift: overtime hours come from the server row', () => {
   const s = mapShift({
     id: 's', request_id: 'r', venue_id: 'v', spg_id: 'u', shift_date: '2026-11-02', planned_start: '09:00:00',
