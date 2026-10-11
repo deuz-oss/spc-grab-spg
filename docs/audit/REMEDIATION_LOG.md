@@ -30,7 +30,7 @@ API (same approach as `scripts/ui-smoke.mjs`); "SQL" = `scripts/test-db.sh` on P
 | A-OPS-02 DB tests need local Postgres | P3 | FIXED (Docker wrapper) |
 | A-A11Y-05 `scrollable-region-focusable` on Peta (320 px) and read-only request detail | P3 | FIXED (follow-up) |
 | A-OPS-03 24 npm advisories in Expo/Metro build tooling | P3 | PARTIALLY FIXED (24 → 16; no upstream fix for the rest) |
-| A-RISK-01…04 Late arrival, duplicate KPI/clock-in, silent double resolve, edge-function error text | P3 | FIXED (follow-up; 0010 not yet on staging, edge function not yet redeployed) |
+| A-RISK-01…04 Late arrival, duplicate KPI/clock-in, silent double resolve, edge-function error text | P3 | FIXED (follow-up; 0010 applied and edge function redeployed on staging) |
 
 ---
 
@@ -171,7 +171,7 @@ API (same approach as `scripts/ui-smoke.mjs`); "SQL" = `scripts/test-db.sh` on P
 - **A-RISK-03 Silent double resolve — FIXED.** `resolve_exception` raises "Exception ini sudah ditutup (mungkin
   oleh PIC lain)"; the store reloads before surfacing the error, so the closed card leaves the screen. SQL test.
 - **A-RISK-04 Edge function leaked internal error text — FIXED in code.** `admin-users` logs the error and returns
-  a generic message on 500. Needs a redeploy of the function to reach staging.
+  a generic message on 500. Redeployed to staging (version 2).
 - **A-A11Y-05 `scrollable-region-focusable` — FIXED.** `scrollRegion()` in `ui.tsx`: on web the screen's scroll
   container is a focusable, named region (Peta live, Detail request, Jadwal saya). Native unchanged. Browser:
   axe violations **0** across Grab, PIC, back office, coordinator, SPG running — 105 screen × viewport
