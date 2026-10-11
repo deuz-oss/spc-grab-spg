@@ -14,7 +14,7 @@ import { KPI_PROOF_BUCKET, PROFILE_PHOTO_BUCKET, SELFIE_BUCKET } from '../utils/
 import { uid } from '../utils/uuid';
 import type { ExportData } from '../utils/exports';
 import { fetchAllPages } from '../utils/paging';
-import { drainQueue, isNetworkError, queueReason, settle, type ReplayResult } from './replay';
+import { drainQueue, isNetworkError, queueReason, settle, settleOwnInsert, type ReplayResult } from './replay';
 import {
   mapAttendance, mapCampaign, mapCity, mapDailyReport, mapException, mapKpi, mapLivePosition, mapProfile, mapReplacement,
   mapRequest, mapShift, mapTraining, mapVenue,
@@ -179,6 +179,15 @@ export const useStore = create<StoreState>((set, get) => {
     void snapshot();
   }
 
+  /** Message of the last deterministic refusal in replay(), shown when the user is waiting on it. */
+  let lastRefusal: string | null = null;
+
+  /** For settleOwnInsert: is the row with this id on the server? null when the check itself failed. */
+  async function ownRowExists(table: 'attendances' | 'kpi_logs', id: string): Promise<boolean | null> {
+    const { data, error } = await supabase.from(table).select('id').eq('id', id).maybeSingle();
+    return error ? null : !!data;
+  }
+
   async function replay(op: QueuedOp): Promise<ReplayResult> {
     const me = get().me!;
     switch (op.type) {
@@ -195,7 +204,8 @@ export const useStore = create<StoreState>((set, get) => {
           id: a.id, shift_id: a.shiftId, user_id: a.userId, clock_in_at: new Date(a.clockInAt).toISOString(),
           clock_in_lat: a.clockInLat, clock_in_lng: a.clockInLng, mocked: a.mocked,
         });
-        const r = settle(error);
+        const r = settleOwnInsert(error, error?.code === '23505' ? await ownRowExists('attendances', a.id) : null);
+        if (r === 'failed') lastRefusal = error?.code === '23505' ? 'Shift ini sudah clock-in dari HP lain.' : error?.message ?? null;
         if (r !== 'done') return r;
         const media = await supabase.from('attendance_media').insert({ attendance_id: a.id, selfie_in_path: path });
         if (media.error && settle(media.error) === 'retry') return 'retry';
@@ -206,7 +216,9 @@ export const useStore = create<StoreState>((set, get) => {
         const { error } = await supabase.from('attendances')
           .update({ clock_out_at: new Date(op.clockOutAt).toISOString(), clock_out_lat: op.lat, clock_out_lng: op.lng })
           .eq('id', op.attendanceId);
-        return settle(error);
+        const r = settle(error);
+        if (r === 'failed') lastRefusal = error?.message ?? null;
+        return r;
       }
       case 'submitKpi': {
         const k = op.log;
@@ -223,7 +235,8 @@ export const useStore = create<StoreState>((set, get) => {
           id: k.id, shift_id: k.shiftId, spg_id: k.spgId, field_key: k.fieldKey, value: k.value,
           proof_path: proof, logged_at: new Date(k.loggedAt).toISOString(),
         });
-        const r = settle(error);
+        const r = settleOwnInsert(error, error?.code === '23505' ? await ownRowExists('kpi_logs', k.id) : null);
+        if (r === 'failed') lastRefusal = error?.code === '23505' ? 'KPI ini sudah tercatat untuk shift ini (dari HP lain).' : error?.message ?? null;
         if (r === 'done' && op.localProofUri) await discardLocalPhoto(op.localProofUri);
         return r;
       }
@@ -234,9 +247,11 @@ export const useStore = create<StoreState>((set, get) => {
   async function runOrQueue(op: QueuedOp): Promise<'sent' | 'queued'> {
     const reason = queueReason(await online(), get().queue.length);
     if (!reason) {
+      lastRefusal = null;
       const r = await replay(op);
       if (r === 'done') return 'sent';
-      if (r === 'failed') throw new Error('Server menolak data ini. Periksa jadwal dan coba lagi.');
+      // The server's own reason (e.g. the shift was marked no-show) says more than a generic refusal.
+      if (r === 'failed') throw new Error(lastRefusal ?? 'Server menolak data ini. Periksa jadwal dan coba lagi.');
       if (r === 'dropped') throw new Error('Foto tidak ditemukan di HP. Ambil ulang fotonya.');
     }
     await enqueue(op);
@@ -408,8 +423,10 @@ export const useStore = create<StoreState>((set, get) => {
     },
 
     async resolveException(id, status, note) {
-      fail((await supabase.rpc('resolve_exception', { p_id: id, p_status: status, p_note: note })).error);
-      await loadAll(get().me!.id);
+      const { error } = await supabase.rpc('resolve_exception', { p_id: id, p_status: status, p_note: note });
+      // Reload either way: when another PIC already closed it, the card should leave this screen too.
+      await loadAll(get().me!.id).catch(() => undefined);
+      fail(error);
     },
 
     async publishDailyReport(date) {

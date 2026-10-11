@@ -366,4 +366,17 @@ select tests.as_user(null);
 select tests.ok((public.build_daily_report(public.wib(now())::date + 5)->>'planned')::int = 0,
                 'daily report: a shift taken off the roster by a replacement is not counted as planned');
 
+-- ---------------------------------------------------------------- late arrival and double resolve (migration 0010)
+select tests.as_user('00000000-0000-0000-0000-0000000000e3');
+set role authenticated;
+select tests.fails($$insert into public.attendances (id, shift_id, user_id, clock_in_at, clock_in_lat, clock_in_lng)
+                     values ('a_late', 's3', '00000000-0000-0000-0000-0000000000e3', now(), -7.2625, 112.7389)$$,
+                   'ditandai tidak hadir', 'no clock-in on a shift already marked no-show');
+reset role;
+select tests.as_user('00000000-0000-0000-0000-0000000000b1');
+set role authenticated;
+select tests.fails($$select public.resolve_exception((select id from public.exceptions where shift_id = 's1' and type = 'late'), 'waived', 'again')$$,
+                   'sudah ditutup', 'resolving an already-closed exception says so');
+reset role;
+
 \echo 'ALL SMOKE CHECKS PASSED'

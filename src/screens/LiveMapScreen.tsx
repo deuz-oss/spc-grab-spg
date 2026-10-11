@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Badge, Card, Empty, ErrorState, ListRow, Muted, SectionHeader } from '../components/ui';
+import { Badge, Card, Empty, ErrorState, ListRow, Muted, scrollRegion, SectionHeader } from '../components/ui';
 import { LeafletMap, type MapMarker } from '../components/LeafletMap';
 import { useStore } from '../store/useStore';
 import { agoLabel, liveState, type LiveState } from '../utils/live';
@@ -70,7 +70,7 @@ export default function LiveMapScreen() {
     && !s.attendances.some((a) => a.shiftId === x.id) && !rows.some((r) => r.p.shiftId === x.id)).length;
 
   return (
-    <ScrollView contentContainerStyle={{ padding: SP.lg }}>
+    <ScrollView contentContainerStyle={{ padding: SP.lg }} {...scrollRegion('Peta live')}>
       <SectionHeader title="Peta live" subtitle={`SPG yang sedang shift · diperbarui ${wibClock(now)} WIB`} />
       {error && <ErrorState text={error} onRetry={load} />}
       <Card style={{ padding: 0, overflow: 'hidden', marginBottom: SP.md }}>

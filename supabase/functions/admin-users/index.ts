@@ -136,7 +136,9 @@ Deno.serve(async (req) => {
 
     return json({ error: 'Unknown action' }, 400);
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : 'Unknown error' }, 500);
+    // Details go to the function log, not to the caller (they can name tables, keys or internals).
+    console.error('admin-users failed:', err);
+    return json({ error: 'Terjadi kesalahan di server. Coba lagi atau hubungi super admin.' }, 500);
   }
 });
 

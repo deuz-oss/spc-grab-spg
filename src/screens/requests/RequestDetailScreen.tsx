@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Badge, Btn, Card, Chip, Empty, Field, Input, ListRow, Muted, SectionHeader } from '../../components/ui';
+import { Badge, Btn, Card, Chip, Empty, Field, Input, ListRow, Muted, scrollRegion, SectionHeader } from '../../components/ui';
 import { SpgAvatar } from '../../components/pickers';
 import { showDialog, showToast } from '../../components/dialog';
 import { useCurrentUser, useStore } from '../../store/useStore';
@@ -126,7 +126,7 @@ export default function RequestDetailScreen({ route, navigation }: Props) {
   const pool: Profile[] = candidates(s.profiles, req);
 
   return (
-    <ScrollView contentContainerStyle={{ padding: SP.lg }} keyboardShouldPersistTaps="handled">
+    <ScrollView contentContainerStyle={{ padding: SP.lg }} keyboardShouldPersistTaps="handled" {...scrollRegion('Detail request')}>
       <SectionHeader title={camp?.name ?? 'Request'} subtitle={`${city?.name ?? ''} · ${venue?.name ?? ''}`} />
       <Card style={{ marginBottom: SP.md, gap: SP.xs }}>
         <View style={{ flexDirection: 'row', gap: SP.sm, flexWrap: 'wrap' }}>

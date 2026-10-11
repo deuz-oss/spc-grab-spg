@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { drainQueue, isNetworkError, queueReason, ReplayResult, settle } from './replay';
+import { drainQueue, isNetworkError, queueReason, ReplayResult, settle, settleOwnInsert } from './replay';
 import type { QueuedOp } from '../utils/offlineQueue';
 
 const op = (id: string): QueuedOp => ({ id, type: 'clockOut', attendanceId: `a_${id}`, clockOutAt: 0, lat: 0, lng: 0 });
@@ -40,6 +40,23 @@ describe('settle', () => {
 
   it('treats network / unknown / PostgREST errors as retry', () => {
     for (const error of [{}, { code: '' }, { code: 'PGRST301' }, { code: '08006' }]) assert.equal(settle(error), 'retry');
+  });
+});
+
+describe('settleOwnInsert', () => {
+  it('a duplicate of our own row is a lost response: done', () => {
+    assert.equal(settleOwnInsert({ code: '23505' }, true), 'done');
+  });
+  it('a duplicate held by another row (second device) is a refusal, not a success', () => {
+    assert.equal(settleOwnInsert({ code: '23505' }, false), 'failed');
+  });
+  it('cannot check yet: retry', () => {
+    assert.equal(settleOwnInsert({ code: '23505' }, null), 'retry');
+  });
+  it('anything else settles as before', () => {
+    assert.equal(settleOwnInsert(null, null), 'done');
+    assert.equal(settleOwnInsert({ code: '42501' }, null), 'failed');
+    assert.equal(settleOwnInsert({ code: '' }, null), 'retry');
   });
 });
 

@@ -24,6 +24,19 @@ export function settle(error: { code?: string } | null): ReplayResult {
   return error.code && /^(22|23|42|P0)/.test(error.code) ? 'failed' : 'retry';
 }
 
+/**
+ * `settle` for an insert whose row has a client-made id but is also unique on something else
+ * (attendances: one per shift; kpi_logs: one per shift and field). A duplicate-key error is only
+ * "already landed" when the row with OUR id is on the server — otherwise another device got there
+ * first, and reporting it as sent would silently drop this phone's data. `ownRowExists` is the
+ * answer to "is a row with this op's id on the server?" (null = could not ask: retry later).
+ */
+export function settleOwnInsert(error: { code?: string } | null, ownRowExists: boolean | null): ReplayResult {
+  if (error?.code !== '23505') return settle(error);
+  if (ownRowExists === null) return 'retry';
+  return ownRowExists ? 'done' : 'failed';
+}
+
 /** A request that never got an answer from the server (no connectivity, DNS
  * failure, a captive portal's HTML page) — postgrest-js reports these with an
  * empty `code`; every real server error carries a SQLSTATE or PGRST code. */

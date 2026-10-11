@@ -63,5 +63,8 @@
     "build:preview": "npx eas-cli build --profile preview --platform android",
     "build:production": "npx eas-cli build --profile production --platform android"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "uuid": "^11.1.1"
+  }
 }

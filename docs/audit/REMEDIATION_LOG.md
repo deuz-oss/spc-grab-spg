@@ -28,9 +28,9 @@ API (same approach as `scripts/ui-smoke.mjs`); "SQL" = `scripts/test-db.sh` on P
 | A-UX-02 Desktop content stretched edge to edge | P3 | FIXED |
 | A-UX-03 Replacement title truncated | P3 | FIXED |
 | A-OPS-02 DB tests need local Postgres | P3 | FIXED (Docker wrapper) |
-| A-A11Y-05 `scrollable-region-focusable` on Peta (320 px) and read-only request detail | P3 | DEFERRED |
-| A-OPS-03 24 npm advisories in Expo/Metro build tooling | P3 | DEFERRED |
-| A-RISK-01…04 | P3 | DEFERRED (product decision / low impact) |
+| A-A11Y-05 `scrollable-region-focusable` on Peta (320 px) and read-only request detail | P3 | FIXED (follow-up) |
+| A-OPS-03 24 npm advisories in Expo/Metro build tooling | P3 | PARTIALLY FIXED (24 → 16; no upstream fix for the rest) |
+| A-RISK-01…04 Late arrival, duplicate KPI/clock-in, silent double resolve, edge-function error text | P3 | FIXED (follow-up; 0010 not yet on staging, edge function not yet redeployed) |
 
 ---
 
@@ -157,12 +157,28 @@ API (same approach as `scripts/ui-smoke.mjs`); "SQL" = `scripts/test-db.sh` on P
 - **02:** `scripts/test-db-docker.sh` + `npm run test:db:docker`: runs `test-db.sh` unchanged inside
   `postgres:16`, mounting only `supabase/` and `scripts/`, stripping CRLF inside the container.
 
-### Deferred
-- **A-A11Y-05 (P3):** axe `scrollable-region-focusable` where a react-native-web `ScrollView` has no focusable
-  child (Peta at 320 px; request detail for read-only roles). Keyboard users can still scroll the page with the
-  window; fixing it means a focusable scroll container in every screen — left for a UI-kit pass.
-- **A-OPS-03 (P3):** `npm audit --omit=dev`: 24 (16 high, 8 moderate) from three advisories — `braces`
-  (GHSA-vfj7-8cjw-p6xm), `node-forge` (GHSA-86w9-cpqp-85rv), `uuid` (GHSA-w5hq-g745-h8pq) — all transitive via
-  Expo CLI / Metro / config plugins (build tooling, not app runtime code paths). npm's only "fix" is a downgrade to
-  Expo 44. Track the next Expo 57 patch release; do not force `npm audit fix`.
-- **A-RISK-01…04:** see INITIAL_AUDIT §5 — need a product decision or are not reachable from one device.
+### Follow-ups (branch `audit/p3-followups`, 11 Oct 2026) — the items first deferred
+
+- **A-RISK-01 Late arrival after the no-show job — FIXED (decision: refuse).** Migration
+  `0010_late_arrival_and_resolve.sql`: `attendances_server_checks` refuses a clock-in on a `no_show` shift with
+  "Shift ini sudah ditandai tidak hadir … Hubungi PIC." The app now shows the server's reason instead of the generic
+  "Server menolak data ini" (`useStore.runOrQueue`, `lastRefusal`). SQL test: clock-in on the no-show shift refused.
+  Negative control without `0010` fails at that check.
+- **A-RISK-02 Duplicate-key treated as "sent" — FIXED.** `settleOwnInsert` (`src/store/replay.ts`): a `23505` on
+  clock-in or KPI replay counts as landed only if the row with the op's own id is on the server; otherwise
+  another device holds the slot and the op is refused with "sudah clock-in / sudah tercatat dari HP lain".
+  4 unit tests.
+- **A-RISK-03 Silent double resolve — FIXED.** `resolve_exception` raises "Exception ini sudah ditutup (mungkin
+  oleh PIC lain)"; the store reloads before surfacing the error, so the closed card leaves the screen. SQL test.
+- **A-RISK-04 Edge function leaked internal error text — FIXED in code.** `admin-users` logs the error and returns
+  a generic message on 500. Needs a redeploy of the function to reach staging.
+- **A-A11Y-05 `scrollable-region-focusable` — FIXED.** `scrollRegion()` in `ui.tsx`: on web the screen's scroll
+  container is a focusable, named region (Peta live, Detail request, Jadwal saya). Native unchanged. Browser:
+  axe violations **0** across Grab, PIC, back office, coordinator, SPG running — 105 screen × viewport
+  combinations, no console errors.
+- **A-OPS-03 npm advisories — PARTIALLY FIXED.** `uuid` forced to `^11.1.1` with an npm `overrides` entry (its
+  two dependents, `xcode` and `@expo/ngrok`, only call `require('uuid').v4()`, present in v11 CJS) → audit
+  24 → 16, moderate 8 → 0. The remaining 16 come from `braces@3.0.3` (GHSA-vfj7-8cjw-p6xm) and `node-forge@1.4.0`
+  (GHSA-86w9-cpqp-85rv): the vulnerable version **is the latest published release** of each, so there is no
+  version to move to. Both are build tooling (Metro file watching, Expo CLI code signing), not app runtime.
+  Re-check when either publishes a fix.
