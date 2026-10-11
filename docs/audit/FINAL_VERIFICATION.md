@@ -81,19 +81,16 @@ Manual: keyboard order and visible focus checked; screen readers (TalkBack / Voi
 |---|---|---|---|
 | A-RISK-06 | — | ✅ **Applied to staging** (`irsgynzhdlwnbvcjynqf`) on 11 Oct 2026 as migration version `20261011094820`. See "Staging deployment" below. | Rollback if ever needed: `drop trigger shifts_guard_api on public.shifts; drop trigger requests_guard_api on public.requests; drop trigger attendance_media_guard_api on public.attendance_media; drop trigger profiles_guard_consent on public.profiles;` and re-create `build_daily_report` from `0001`. |
 | — | — | Supabase security advisor: *Leaked password protection disabled* (Auth setting, pre-existing). | Enable in Dashboard → Authentication → Password security. |
-| A-A11Y-05 | P3 | `scrollable-region-focusable` | Make the screen scroll container focusable on web in the UI kit. |
-| A-OPS-03 | P3 | npm advisories in Expo/Metro tooling | Take the next Expo 57 patch; do not `npm audit fix --force` (downgrades Expo). |
-| A-RISK-01 | P3 | Late SPG can clock in after the no-show job; the shift stays `no_show`. | Product decision: reopen the shift, or refuse the clock-in with a clear message. |
-| A-RISK-02 | P3 | Duplicate `(shift, field)` KPI from a second device is reported as sent. | Distinguish same-id duplicates from field conflicts in `settle` for `submitKpi`. |
-| A-RISK-03 | P3 | `resolve_exception` succeeds silently on an already-closed exception. | Raise "sudah ditutup" so the second PIC is told. |
+| A-A11Y-05, A-RISK-01…04 | P3 | ✅ Fixed in the follow-up (see REMEDIATION_LOG "Follow-ups"): axe 0 violations over 105 screen × viewport combinations; DB smoke **81/81**; unit **77/77**. | Apply `0010_late_arrival_and_resolve.sql` to staging; redeploy the `admin-users` edge function. |
+| A-OPS-03 | P3 | 16 high advisories remain (`braces@3.0.3`, `node-forge@1.4.0` — both already the latest release, no fix published); `uuid` fixed by override (24 → 16). | Re-run `npm audit` when either publishes a fix; do not `npm audit fix --force` (downgrades Expo). |
 | — | — | Native Android/iOS, camera capture, background GPS, push — not exercised here (no device). | Pilot-phone pass per README phase "Android dev build on a real phone". |
 
 ### Reproduction for unresolved items
-- **A-A11Y-05:** web build → sign in as Grab → Peta at 320 px width → run axe → `scrollable-region-focusable`.
-- **A-RISK-01:** SQL: shift starting 40 min ago, run `select public.detect_no_shows()`, then insert an attendance
-  as the SPG → accepted, shift status stays `no_show`.
-- **A-RISK-03:** two sessions as PIC, both `select public.resolve_exception(<id>, 'resolved', 'x')` → both succeed,
-  the second changes nothing.
+- **A-OPS-03:** `npm audit --omit=dev` → 16 high, all via `braces@3.0.3` (Metro → micromatch) and
+  `node-forge@1.4.0` (Expo CLI code signing). `npm view braces version` / `npm view node-forge version` show these
+  are the newest releases.
+- The A-A11Y-05 and A-RISK-01/03 reproductions now fail as intended (smoke checks "no clock-in on a shift already
+  marked no-show", "resolving an already-closed exception says so"; axe clean on Peta 320 px).
 
 ## Staging deployment (11 Oct 2026)
 

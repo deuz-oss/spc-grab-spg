@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
-import { Card, Empty, ListRow, Muted, SectionHeader } from '../components/ui';
+import { Card, Empty, ListRow, Muted, scrollRegion, SectionHeader } from '../components/ui';
 import { useCurrentUser, useStore } from '../store/useStore';
 import { useNow } from '../components/useNow';
 import { programDayKey } from '../utils/period';
@@ -50,7 +50,8 @@ export default function SpgScheduleScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: SP.lg }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+    <ScrollView contentContainerStyle={{ padding: SP.lg }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      {...scrollRegion('Jadwal saya')}>
       <SectionHeader title="Jadwal saya" subtitle="Shift yang akan datang" />
       {upcoming.length === 0 ? (
         <Empty text="Belum ada jadwal. PIC SPC akan mengabari bila ada penugasan." icon="calendar-outline" />

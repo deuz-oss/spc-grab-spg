@@ -481,6 +481,15 @@ export function StickyFooter({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Props for a screen's ScrollView whose content may have nothing focusable (read-only lists, the map):
+ * on web a scrollable area must itself take keyboard focus, or keyboard users cannot scroll it
+ * (WCAG 2.1.1, axe `scrollable-region-focusable`). A named region, so the focus stop is announced.
+ * Native scrolls with its own accessibility gestures — no change there.
+ */
+export const scrollRegion = (label: string): object =>
+  Platform.OS === 'web' ? { focusable: true, role: 'region', 'aria-label': label } : {};
+
 /** Garis pemisah tipis — dipakai daripada tiap layar bikin View 1px sendiri. */
 export function Divider({ style }: { style?: object }) {
   return <View style={[{ height: StyleSheet.hairlineWidth, backgroundColor: C.border }, style]} />;
