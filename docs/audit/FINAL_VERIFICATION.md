@@ -79,7 +79,8 @@ Manual: keyboard order and visible focus checked; screen readers (TalkBack / Voi
 
 | ID | Sev | Issue | Next step |
 |---|---|---|---|
-| A-RISK-06 | — | Migration `0009_audit_hardening.sql` is not applied to staging (`irsgynzhdlwnbvcjynqf`). | Apply in the Supabase SQL Editor (it contains no DELETE, so the MCP connector can apply it too), then rerun the staging role checks; regenerate `src/lib/database.types.ts` (adds `is_api_caller` to Functions). Rollback: `drop trigger shifts_guard_api on public.shifts; drop trigger requests_guard_api on public.requests; drop trigger attendance_media_guard_api on public.attendance_media; drop trigger profiles_guard_consent on public.profiles;` and re-create `build_daily_report` from `0001`. |
+| A-RISK-06 | — | ✅ **Applied to staging** (`irsgynzhdlwnbvcjynqf`) on 11 Oct 2026 as migration version `20261011094820`. See "Staging deployment" below. | Rollback if ever needed: `drop trigger shifts_guard_api on public.shifts; drop trigger requests_guard_api on public.requests; drop trigger attendance_media_guard_api on public.attendance_media; drop trigger profiles_guard_consent on public.profiles;` and re-create `build_daily_report` from `0001`. |
+| — | — | Supabase security advisor: *Leaked password protection disabled* (Auth setting, pre-existing). | Enable in Dashboard → Authentication → Password security. |
 | A-A11Y-05 | P3 | `scrollable-region-focusable` | Make the screen scroll container focusable on web in the UI kit. |
 | A-OPS-03 | P3 | npm advisories in Expo/Metro tooling | Take the next Expo 57 patch; do not `npm audit fix --force` (downgrades Expo). |
 | A-RISK-01 | P3 | Late SPG can clock in after the no-show job; the shift stays `no_show`. | Product decision: reopen the shift, or refuse the clock-in with a clear message. |
@@ -94,8 +95,24 @@ Manual: keyboard order and visible focus checked; screen readers (TalkBack / Voi
 - **A-RISK-03:** two sessions as PIC, both `select public.resolve_exception(<id>, 'resolved', 'x')` → both succeed,
   the second changes nothing.
 
+## Staging deployment (11 Oct 2026)
+
+- Pre-checks: staging was at `0008`; every server function involved (`validate_shift`, `detect_no_shows`,
+  `open_replacement`, `refresh_request_status`, `attendances_flag_exceptions`, `auto_close_attendances`,
+  `build_daily_report`) is `security definer` owned by `postgres`, and all 5 pg_cron jobs run as `postgres` — so
+  the guards do not apply to the server's own writes.
+- Applied the committed file unchanged (`01b36ed`) via the Supabase connector; all 4 triggers present and enabled.
+- Live check as `demo.pic` through the `authenticated` role, inside a transaction that was always rolled back:
+  shift → `done` refused, `validated_at` refused, SLA move refused, consent on behalf of `demo.spg` refused,
+  planned → cancelled still allowed. Afterwards the data was confirmed unchanged (shift still `planned`, SPG consent
+  still null).
+- Security advisor after the migration: nothing new from `0009`. The 8 "signed-in users can execute SECURITY
+  DEFINER" warnings are the app's intended RPCs (each checks the caller's role); one INFO on
+  `media_purge_queue` (service-role only by design); leaked password protection (above).
+- `src/lib/database.types.ts`: regenerated from staging; the only difference is `is_api_caller` in Functions.
+
 ## Status
 
-**VERIFIED WITH LIMITATIONS** — every P1 and P2 finding is fixed and verified by tests and in the browser; the
-limitations are environmental: no native device run, no screen-reader run, GitHub CI not observable from here,
-and migration `0009` awaits application to staging.
+**VERIFIED WITH LIMITATIONS** — every P1 and P2 finding is fixed, verified by tests and in the browser, and the
+database part is live on staging; the limitations are environmental: no native device run, no screen-reader run,
+GitHub CI not observable from here.
