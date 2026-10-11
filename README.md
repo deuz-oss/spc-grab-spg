@@ -34,7 +34,7 @@ Migrations in `supabase/migrations/`, applied in filename order to a Supabase pr
 | `0007_profile_photos_storage.sql` | Private `profile-photos` bucket: staff upload, Grab can see (roster). Supabase-only |
 | `0008_campaign_kpi_lock.sql` | KPI fields fixed once SPG have logged against them |
 | `0009_audit_hardening.sql` | Audit 11 Oct 2026 (`docs/audit/`): API callers cannot set shift status/validation/overtime (billing), request SLA fields, the clock-in selfie, or another person's consent; daily report no longer counts replaced shifts. Applied to staging 11 Oct 2026 |
-| `0010_late_arrival_and_resolve.sql` | No clock-in on a shift already marked no-show (the SPG is told to call the PIC); resolving an already-closed exception says so. **Not yet applied to staging** |
+| `0010_late_arrival_and_resolve.sql` | No clock-in on a shift already marked no-show (the SPG is told to call the PIC); resolving an already-closed exception says so. Applied to staging 11 Oct 2026 |
 | `0005_hardening.sql` | From the Supabase security advisor: signed-out callers execute no function, trigger functions are not callable over the API, fixed `search_path` everywhere |
 
 Rules that live in the database, not the phone:
