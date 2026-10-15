@@ -434,4 +434,29 @@ select tests.ok(exists (select 1 from public.exceptions where shift_id = 'sk_hi'
 select tests.ok(exists (select 1 from public.exceptions where shift_id = 'sk_hi' and type = 'kpi_outlier' and detail like 'contacts = 40, median 7 hari %(% shift)'),
                 'outlier detail names the median it was compared with');
 
+-- ---------------------------------------------------------------- clock-in GPS accuracy (migration 0013)
+select tests.as_user(null);
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-0000000000e8', 'spg8@internal.spc', '{"username":"spg8"}');
+update public.profiles set active = true, role = 'spg', grade = 'A', contract_type = 'daily_worker', city_id = 'kota-surabaya',
+       consent_version = 'test-v1' where username = 'spg8';
+set session_replication_role = replica;
+insert into public.shifts (id, request_id, venue_id, spg_id, shift_date, planned_start, planned_end) values
+  ('sa_acc', 'r_kpi', 'v_tp', '00000000-0000-0000-0000-0000000000e8', public.wib(now())::date, '00:00', '23:59');
+set session_replication_role = origin;
+select tests.as_user('00000000-0000-0000-0000-0000000000e8');
+set role authenticated;
+-- ~300 m north of the venue pin, network fix good to ±1850.4 m
+insert into public.attendances (id, shift_id, user_id, clock_in_at, clock_in_lat, clock_in_lng, accuracy_m)
+  values ('aa_acc', 'sa_acc', '00000000-0000-0000-0000-0000000000e8', now(), -7.2598, 112.7389, 1850.4);
+select tests.fails($$update public.attendances set accuracy_m = 5 where id = 'aa_acc'$$,
+                   'tidak bisa diubah', 'clock-in accuracy is fixed once written');
+reset role;
+select tests.ok(exists (select 1 from public.exceptions where shift_id = 'sa_acc' and type = 'off_site'
+                          and detail like 'Jarak % m dari venue (akurasi ±1850 m)'),
+                'off-site exception names the clock-in GPS accuracy');
+select tests.as_user(null);
+select tests.fails($$update public.attendances set accuracy_m = -1 where id = 'aa_acc'$$,
+                   'attendances_accuracy_m_check', 'clock-in accuracy cannot be negative');
+
 \echo 'ALL SMOKE CHECKS PASSED'

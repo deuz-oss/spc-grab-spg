@@ -12,9 +12,9 @@ loop: **request → schedule → geotag clock-in → KPI → server checks → P
 | Phase (spec) | Dates | State |
 |---|---|---|
 | Spec approval | 10–12 Oct | ✅ approved 9 Oct |
-| Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 85 smoke checks pass on Postgres 16 |
+| Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 88 smoke checks pass on Postgres 16 |
 | Foundation: app scaffold | 13–17 Oct | ✅ login, SPG today (selfie clock-in, KPI, clock-out, offline queue), PIC/Grab today (exception queue, validation), profile — tsc, lint, 56 unit tests, web bundle green |
-| Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9–11 Oct | ✅ migrations `0001`–`0012` applied (the retention purge was pasted in the SQL Editor). All 5 cron jobs live (no-shows, auto-close, daily report, request status, retention). Schema checked object by object against the repo on 11 Oct: identical apart from comments. Edge function `admin-users` v2. Demo data from `supabase/seed/staging_demo.sql` (6 accounts, one per role) |
+| Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9–11 Oct | ✅ migrations `0001`–`0013` applied (the retention purge was pasted in the SQL Editor). All 5 cron jobs live (no-shows, auto-close, daily report, request status, retention). Schema checked object by object against the repo on 11 Oct: identical apart from comments. Edge function `admin-users` v2. Demo data from `supabase/seed/staging_demo.sql` (6 accounts, one per role) |
 | Foundation: Android dev build on a real phone | 13–17 Oct | 🟡 EAS project `@deuz-osss-team/spc-grab-spg` linked 15 Oct. First preview APK (versionCode 1) on a Galaxy S24 Ultra, Android 16: login, consent, selfie clock-in, server geofence/off-site OK; crashed on the first background GPS fix (missing `RECEIVE_BOOT_COMPLETED`, fixed in the next build) |
 | Core loop screens | 19–24 Oct | ✅ built 9 Oct — requests & roster, scheduling with grade/training checks, replacements, live map, consent, daily report publish, CSV exports (attendance, payroll, billing), SPG onboarding, venues, campaigns, accounts. Verified on staging via SQL as each role and in a mocked-backend browser run; not yet on a real phone |
 | Reports, payroll export, pilot (5 SPG) | 26–30 Oct | ⬜ |
@@ -37,6 +37,7 @@ Migrations in `supabase/migrations/`, applied in filename order to a Supabase pr
 | `0010_late_arrival_and_resolve.sql` | No clock-in on a shift already marked no-show (the SPG is told to call the PIC); resolving an already-closed exception says so. Applied to staging 11 Oct 2026 |
 | `0011_anon_grants_tidy.sql` | Signed-out callers execute no function at all (two helpers had slipped through); `retention_months()` gets a fixed `search_path`. Applied to staging 11 Oct 2026 |
 | `0012_kpi_outlier.sql` | KPI outlier: a shift total at 3x or more the 7-day median of the same campaign field (at least 5 shifts to compare) opens a `kpi_outlier` exception, which blocks billing until the PIC resolves or waives it. Applied to staging 15 Oct 2026 |
+| `0013_clock_in_accuracy.sql` | Clock-in GPS accuracy from the phone (bug B1, phone test 15 Oct): never negative, fixed once written like the rest of the clock-in, and named in the off-site exception ("Jarak 15164 m dari venue (akurasi ±2000 m)") so the PIC can tell a bad fix from an SPG away from the venue. Geofence rules unchanged. Applied to staging 15 Oct 2026 |
 | `0005_hardening.sql` | From the Supabase security advisor: signed-out callers execute no function, trigger functions are not callable over the API, fixed `search_path` everywhere |
 
 Rules that live in the database, not the phone:
@@ -76,7 +77,7 @@ Reused unchanged from `spc-nc-workforce`: UI kit, dialogs, theme, offline replay
 location task, tracking watcher, offline snapshot, error reporting. Rewritten for Grab: types, store, mappers,
 storage (private `selfies` / `kpi-proof` buckets), geofence helper, screens.
 
-Checks: `npm run typecheck`, `npm run lint`, `npm test` (83 unit tests, including the edge-function logic), `npm run test:db` (85 database checks).
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (85 unit tests, including the edge-function logic), `npm run test:db` (88 database checks).
 CI runs all of them plus Expo doctor and a web bundle on every push.
 
 Tabs per role: SPG/coordinator — Hari Ini, Jadwal (coordinator also Peta), Profil, after a one-time UU PDP consent.

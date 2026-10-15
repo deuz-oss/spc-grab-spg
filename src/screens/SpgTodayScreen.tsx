@@ -72,7 +72,10 @@ function ShiftCard({ shift, venue, campaign, attendance }: { shift: Shift; venue
       } else if (!fence.inside) {
         showDialog(
           'Di Luar Lokasi',
-          `Anda ${fence.distanceM} m dari ${venue.name} (batas ${venue.radiusM} m). Clock-in tetap bisa, tapi akan ditandai dan dicek PIC.`,
+          `Anda ${fence.distanceM} m dari ${venue.name} (batas ${venue.radiusM} m). Clock-in tetap bisa, tapi akan ditandai dan dicek PIC.` +
+            (pos.accuracyM != null && pos.accuracyM > venue.radiusM
+              ? `\n\nSinyal GPS lemah (akurasi ±${Math.round(pos.accuracyM)} m). Kalau Anda sudah di venue, coba lagi di dekat pintu masuk atau jendela.`
+              : ''),
           [{ label: 'Batal' }, { label: 'Tetap Clock-in', onPress: () => void proceed().catch((e) => showDialog('Gagal', String(e.message ?? e))) }],
         );
       } else {

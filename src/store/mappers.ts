@@ -54,7 +54,8 @@ export const mapShift = (r: Row): Shift => ({
 
 export const mapAttendance = (r: Row): Omit<Attendance, 'route'> & { route: Attendance['route'] } => ({
   id: String(r.id), shiftId: String(r.shift_id), userId: String(r.user_id), clockInAt: ms(r.clock_in_at) ?? 0,
-  clockInLat: Number(r.clock_in_lat), clockInLng: Number(r.clock_in_lng), mocked: Boolean(r.mocked),
+  clockInLat: Number(r.clock_in_lat), clockInLng: Number(r.clock_in_lng),
+  accuracyM: num(r.accuracy_m), mocked: Boolean(r.mocked),
   geoValid: r.geo_valid == null ? null : Boolean(r.geo_valid), distanceM: num(r.distance_m), lateMin: num(r.late_min),
   clockOutAt: ms(r.clock_out_at), autoClosed: Boolean(r.auto_closed), route: [],
 });

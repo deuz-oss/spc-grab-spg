@@ -24,7 +24,7 @@ import { CONSENT_VERSION, FIELD_ROLES, HISTORY_DAYS, MONITOR_ROLES } from '../co
 /** Username in the UI, synthetic e-mail in Supabase Auth (same scheme as the reference app). */
 export const usernameToEmail = (u: string) => `${u.trim().toLowerCase()}@internal.spc`;
 
-type Pos = { lat: number; lng: number; mocked: boolean };
+type Pos = { lat: number; lng: number; mocked: boolean; accuracyM?: number | null };
 
 export interface NewRequest {
   campaignId: string; cityId: string; venueId: string; grade: GrabRequest['grade']; headcount: number;
@@ -202,7 +202,7 @@ export const useStore = create<StoreState>((set, get) => {
         const a = op.attendance;
         const { error } = await supabase.from('attendances').insert({
           id: a.id, shift_id: a.shiftId, user_id: a.userId, clock_in_at: new Date(a.clockInAt).toISOString(),
-          clock_in_lat: a.clockInLat, clock_in_lng: a.clockInLng, mocked: a.mocked,
+          clock_in_lat: a.clockInLat, clock_in_lng: a.clockInLng, accuracy_m: a.accuracyM ?? null, mocked: a.mocked,
         });
         const r = settleOwnInsert(error, error?.code === '23505' ? await ownRowExists('attendances', a.id) : null);
         if (r === 'failed') lastRefusal = error?.code === '23505' ? 'Shift ini sudah clock-in dari HP lain.' : error?.message ?? null;
@@ -342,7 +342,7 @@ export const useStore = create<StoreState>((set, get) => {
       if (get().attendances.some((a) => a.shiftId === shiftId)) throw new Error('Shift ini sudah clock-in.');
       const attendance: Attendance = {
         id: `a_${uid()}`, shiftId, userId: me.id, clockInAt: Date.now(), clockInLat: pos.lat, clockInLng: pos.lng,
-        mocked: pos.mocked, geoValid: null, distanceM: null, lateMin: null, clockOutAt: null, autoClosed: false,
+        accuracyM: pos.accuracyM ?? null, mocked: pos.mocked, geoValid: null, distanceM: null, lateMin: null, clockOutAt: null, autoClosed: false,
         route: [{ lat: pos.lat, lng: pos.lng, t: Date.now() }], pending: true,
       };
       // Native: copy the photo somewhere the OS will not evict before the queue uploads it.
