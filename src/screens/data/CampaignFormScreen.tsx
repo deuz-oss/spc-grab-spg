@@ -42,25 +42,25 @@ export default function CampaignFormScreen({ route, navigation }: Props) {
   const addField = () => {
     const key = kpiKey(label);
     if (!key) return showDialog('Nama KPI', 'Isi nama KPI, mis. "App downloads".');
-    if (fields.some((f) => f.key === key)) return showDialog('Sudah Ada', 'KPI dengan nama ini sudah ada.');
+    if (fields.some((f) => f.key === key)) return showDialog('Sudah ada', 'KPI dengan nama ini sudah ada.');
     setFields([...fields, { key, label: label.trim(), unit: unit.trim() || 'jumlah', proof_required: proof }]);
     setLabel('');
     setUnit('');
   };
 
   const save = async () => {
-    if (!name.trim()) return showDialog('Lengkapi Campaign', 'Nama campaign wajib.');
-    if (!fields.length) return showDialog('KPI Kosong', 'Tambahkan minimal satu KPI.');
-    if (!existing && !isDate(startsOn)) return showDialog('Tanggal Mulai', 'Format TTTT-BB-HH.');
-    if (endsOn && !isDate(endsOn)) return showDialog('Tanggal Selesai', 'Format TTTT-BB-HH atau kosongkan.');
-    if (endsOn && endsOn < startsOn) return showDialog('Tanggal Selesai', `Tanggal selesai tidak boleh sebelum tanggal mulai (${startsOn}).`);
+    if (!name.trim()) return showDialog('Lengkapi campaign', 'Nama campaign wajib.');
+    if (!fields.length) return showDialog('KPI kosong', 'Tambahkan minimal satu KPI.');
+    if (!existing && !isDate(startsOn)) return showDialog('Tanggal mulai', 'Format TTTT-BB-HH.');
+    if (endsOn && !isDate(endsOn)) return showDialog('Tanggal selesai', 'Format TTTT-BB-HH atau kosongkan.');
+    if (endsOn && endsOn < startsOn) return showDialog('Tanggal selesai', `Tanggal selesai tidak boleh sebelum tanggal mulai (${startsOn}).`);
     setBusy(true);
     try {
       await s.saveCampaign({ id: existing?.id, name: name.trim(), type, kpiFields: fields, startsOn, endsOn: endsOn || null, active });
       showToast('Campaign tersimpan');
       navigation.goBack();
     } catch (e) {
-      showDialog('Gagal Menyimpan', e instanceof Error ? e.message : String(e));
+      showDialog('Gagal menyimpan', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -103,7 +103,7 @@ export default function CampaignFormScreen({ route, navigation }: Props) {
           </>
         )}
       </Card>
-      <Btn title="Simpan Campaign" onPress={save} loading={busy} />
+      <Btn title="Simpan campaign" onPress={save} loading={busy} />
     </ScrollView>
   );
 }

@@ -49,7 +49,7 @@ export default function RequestFormScreen({ navigation }: Props) {
 
   const submit = async () => {
     const p = problem();
-    if (p) return showDialog('Lengkapi Request', p);
+    if (p) return showDialog('Lengkapi request', p);
     setBusy(true);
     try {
       const id = await s.createRequest({
@@ -59,7 +59,7 @@ export default function RequestFormScreen({ navigation }: Props) {
       showToast('Request tersimpan — SLA hiring mulai berjalan');
       navigation.replace('RequestDetail', { id });
     } catch (e) {
-      showDialog('Gagal Menyimpan', e instanceof Error ? e.message : String(e));
+      showDialog('Gagal menyimpan', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -91,7 +91,7 @@ export default function RequestFormScreen({ navigation }: Props) {
       <Field label="Catatan">
         <Input value={notes} onChangeText={setNotes} placeholder="Mis. dress code, kontak di venue" multiline />
       </Field>
-      <Btn title="Simpan Request" onPress={submit} loading={busy} />
+      <Btn title="Simpan request" onPress={submit} loading={busy} />
     </ScrollView>
   );
 }

@@ -59,14 +59,14 @@ export default function ReportsScreen() {
       await s.publishDailyReport(date);
       showToast(`Laporan ${date} terbit — Grab sudah bisa membaca`);
     } catch (e) {
-      showDialog('Gagal Menerbitkan', e instanceof Error ? e.message : String(e));
+      showDialog('Gagal menerbitkan', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(null);
     }
   };
 
   const doExport = async (kind: 'attendance' | 'payroll' | 'billing') => {
-    if (!isDate(from) || !isDate(to) || to < from) return showDialog('Periode Tidak Valid', 'Isi tanggal dari dan sampai (TTTT-BB-HH).');
+    if (!isDate(from) || !isDate(to) || to < from) return showDialog('Periode tidak valid', 'Isi tanggal dari dan sampai (TTTT-BB-HH).');
     setBusy(kind);
     try {
       const data = await s.fetchExportData(from, to);
@@ -79,7 +79,7 @@ export default function ReportsScreen() {
         await exportCsv(`${kind === 'payroll' ? 'payroll' : 'kehadiran'}-${from}-${to}`, toCsv(rows));
       }
     } catch (e) {
-      showDialog('Gagal Ekspor', e instanceof Error ? e.message : String(e));
+      showDialog('Gagal ekspor', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(null);
     }

@@ -61,7 +61,7 @@ export async function getPhotoUrl(bucket: PhotoBucket, ref: string | null | unde
 export async function openPhoto(bucket: PhotoBucket, ref: string | null | undefined): Promise<void> {
   const path = photoStoragePath(ref);
   if (!path) {
-    showDialog('Foto Belum Tersedia', 'Foto ini belum terupload (masih tersimpan offline di HP SPG).');
+    showDialog('Foto belum tersedia', 'Foto ini belum terupload (masih tersimpan offline di HP SPG).');
     return;
   }
   // Web: open the tab inside the click, then point it at the URL — after an await it would be popup-blocked.
@@ -69,7 +69,7 @@ export async function openPhoto(bucket: PhotoBucket, ref: string | null | undefi
   const url = await getPhotoUrl(bucket, path);
   if (!url) {
     tab?.close();
-    showDialog('Tidak Dapat Membuka Foto', 'Foto tidak ditemukan atau Anda tidak punya akses.');
+    showDialog('Tidak dapat membuka foto', 'Foto tidak ditemukan atau Anda tidak punya akses.');
     return;
   }
   if (tab) tab.location.href = url;

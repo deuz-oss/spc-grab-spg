@@ -30,7 +30,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
         <Text style={[T.body, { color: C.muted, textAlign: 'center', maxWidth: 340 }]}>
           Kesalahan ini sudah dicatat. Data yang tersimpan offline tetap aman dan akan dikirim saat tersinkron.
         </Text>
-        <Btn title="Coba Lagi" onPress={() => this.setState({ error: null })} />
+        <Btn title="Coba lagi" onPress={() => this.setState({ error: null })} />
       </View>
     );
   }

@@ -68,14 +68,14 @@ export default function RequestDetailScreen({ route, navigation }: Props) {
 
   const schedule = async () => {
     if (!spgId) return showDialog('Pilih SPG', 'Pilih SPG yang dijadwalkan.');
-    if (!dates.length) return showDialog('Pilih Tanggal', 'Pilih minimal satu tanggal.');
+    if (!dates.length) return showDialog('Pilih tanggal', 'Pilih minimal satu tanggal.');
     if (!isTime(times.start) || !isTime(times.end) || times.end <= times.start) {
-      return showDialog('Jam Tidak Valid', 'Isi jam mulai dan selesai (JJ:MM), selesai setelah mulai.');
+      return showDialog('Jam tidak valid', 'Isi jam mulai dan selesai (JJ:MM), selesai setelah mulai.');
     }
     const p = profileOf(spgId)!;
     const blocked = dates.map((d) => ({ d, why: whyNot(p, req, d, s.trainings, s.shifts) })).filter((x) => x.why);
     if (blocked.length) {
-      return showDialog('Tidak Bisa Dijadwalkan', blocked.map((b) => `${b.d}: ${INELIGIBLE_LABEL[b.why!]}`).join('\n'));
+      return showDialog('Tidak bisa dijadwalkan', blocked.map((b) => `${b.d}: ${INELIGIBLE_LABEL[b.why!]}`).join('\n'));
     }
     setBusy(true);
     try {
@@ -85,7 +85,7 @@ export default function RequestDetailScreen({ route, navigation }: Props) {
       setSpgId(null);
       setReplacing(null);
     } catch (e) {
-      showDialog('Gagal Menjadwalkan', e instanceof Error ? e.message : String(e));
+      showDialog('Gagal menjadwalkan', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -119,9 +119,9 @@ export default function RequestDetailScreen({ route, navigation }: Props) {
   };
 
   const cancelRequest = () =>
-    showDialog('Batalkan Request?', 'Semua shift yang belum berjalan ikut dibatalkan.', [
+    showDialog('Batalkan request?', 'Semua shift yang belum berjalan ikut dibatalkan.', [
       { label: 'Tidak' },
-      { label: 'Batalkan Request', destructive: true, onPress: () => run(async () => { await s.cancelRequest(req.id); navigation.goBack(); }, 'Request dibatalkan') },
+      { label: 'Batalkan request', destructive: true, onPress: () => run(async () => { await s.cancelRequest(req.id); navigation.goBack(); }, 'Request dibatalkan') },
     ]);
 
   const pool: Profile[] = candidates(s.profiles, req);
@@ -269,14 +269,14 @@ export default function RequestDetailScreen({ route, navigation }: Props) {
               );
             })}
           </Field>
-          <Btn title={replacing ? 'Jadwalkan Pengganti' : `Jadwalkan ${dates.length || ''} Shift`} onPress={schedule} loading={busy} />
+          <Btn title={replacing ? 'Jadwalkan pengganti' : `Jadwalkan ${dates.length || ''} shift`} onPress={schedule} loading={busy} />
           {replacing && <Btn title="Batal" variant="outline" onPress={() => setReplacing(null)} />}
         </Card>
       )}
 
       {editable && (
         <View style={{ marginTop: SP.lg }}>
-          <Btn title="Batalkan Request" variant="danger" onPress={cancelRequest} />
+          <Btn title="Batalkan request" variant="danger" onPress={cancelRequest} />
         </View>
       )}
       <View style={{ height: SP.xl }} />

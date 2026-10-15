@@ -612,7 +612,7 @@ export function ErrorState({ text, onRetry }: { text: string; onRetry?: () => vo
     <View role="alert" style={{ alignItems: 'center', paddingVertical: SP.xl, gap: SP.sm }}>
       <Ionicons name="warning-outline" size={26} color={C.dangerStrong} />
       <Text style={[T.body, { fontFamily: F.semi, textAlign: 'center' }]}>{text}</Text>
-      {onRetry && <Btn small variant="outline" title="Coba Lagi" onPress={onRetry} />}
+      {onRetry && <Btn small variant="outline" title="Coba lagi" onPress={onRetry} />}
     </View>
   );
 }

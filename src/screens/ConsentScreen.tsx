@@ -24,7 +24,7 @@ export default function ConsentScreen() {
     try {
       await giveConsent();
     } catch (e) {
-      showDialog('Belum Tersimpan', e instanceof Error ? e.message : 'Periksa koneksi internet lalu coba lagi.');
+      showDialog('Belum tersimpan', e instanceof Error ? e.message : 'Periksa koneksi internet lalu coba lagi.');
     } finally {
       setBusy(false);
     }
@@ -32,7 +32,7 @@ export default function ConsentScreen() {
 
   return (
     <ScrollView contentContainerStyle={{ padding: SP.lg, paddingTop: SP.lg + insets.top, gap: SP.md }}>
-      <SectionHeader title="Persetujuan Data Pribadi" subtitle={`Halo ${me?.name ?? ''}`} />
+      <SectionHeader title="Persetujuan data pribadi" subtitle={`Halo ${me?.name ?? ''}`} />
       <Card>
         <Text style={T.body}>{CONSENT_TEXT}</Text>
         <View style={{ marginTop: SP.md, gap: SP.xs }}>
@@ -43,8 +43,8 @@ export default function ConsentScreen() {
         </View>
         <Muted style={{ marginTop: SP.md }}>Versi {CONSENT_VERSION}</Muted>
       </Card>
-      <Btn title="Saya Setuju" onPress={agree} loading={busy} />
-      <Btn title="Tidak Setuju, Keluar" variant="outline" onPress={() => void signOut()} />
+      <Btn title="Saya setuju" onPress={agree} loading={busy} />
+      <Btn title="Tidak setuju, keluar" variant="outline" onPress={() => void signOut()} />
       <Muted>Tanpa persetujuan ini Anda tidak dapat melakukan absensi. Hubungi PIC SPC bila ada pertanyaan.</Muted>
     </ScrollView>
   );
