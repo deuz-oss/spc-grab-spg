@@ -77,7 +77,7 @@ Reused unchanged from `spc-nc-workforce`: UI kit, dialogs, theme, offline replay
 location task, tracking watcher, offline snapshot, error reporting. Rewritten for Grab: types, store, mappers,
 storage (private `selfies` / `kpi-proof` buckets), geofence helper, screens.
 
-Checks: `npm run typecheck`, `npm run lint`, `npm test` (85 unit tests, including the edge-function logic), `npm run test:db` (88 database checks).
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (86 unit tests, including the edge-function logic), `npm run test:db` (88 database checks).
 CI runs all of them plus Expo doctor and a web bundle on every push.
 
 Tabs per role: SPG/coordinator — Hari Ini, Jadwal (coordinator also Peta), Profil, after a one-time UU PDP consent.
@@ -128,6 +128,9 @@ eas build -p android --profile development  # dev client, only if debugging on t
 ```
 
 The build page gives a QR / link to install the APK. Android will ask to allow installs from that source.
+The Android `versionCode` lives on EAS (`appVersionSource: remote`) and goes up by one on every `preview` and
+`production` build, so each APK on an SPG's phone can be told apart. The first three preview builds (15 Oct) all
+carry versionCode 1.
 
 Android permissions are listed explicitly in `app.json` (`src/tasks/androidPermissions.test.ts` checks them): the
 background location task needs `RECEIVE_BOOT_COMPLETED` (without it the app crashed on the first GPS fix, 15 Oct).
