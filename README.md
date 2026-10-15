@@ -76,7 +76,7 @@ Reused unchanged from `spc-nc-workforce`: UI kit, dialogs, theme, offline replay
 location task, tracking watcher, offline snapshot, error reporting. Rewritten for Grab: types, store, mappers,
 storage (private `selfies` / `kpi-proof` buckets), geofence helper, screens.
 
-Checks: `npm run typecheck`, `npm run lint`, `npm test` (83 unit tests, including the edge-function logic), `npm run test:db` (82 database checks).
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (83 unit tests, including the edge-function logic), `npm run test:db` (85 database checks).
 CI runs all of them plus Expo doctor and a web bundle on every push.
 
 Tabs per role: SPG/coordinator — Hari Ini, Jadwal (coordinator also Peta), Profil, after a one-time UU PDP consent.

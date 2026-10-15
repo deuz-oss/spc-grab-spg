@@ -12,7 +12,7 @@ export const REQUEST_STATUS: Record<RequestStatus, { label: string; color: strin
 
 export const SLA_META: Record<SlaState, { label: string; color: string }> = {
   open: { label: 'berjalan', color: C.info },
-  breached: { label: 'TERLEWAT', color: C.accent },
+  breached: { label: 'terlewat', color: C.accent },
   met: { label: 'tercapai', color: C.ok },
   missed: { label: 'terlambat', color: C.warn },
 };

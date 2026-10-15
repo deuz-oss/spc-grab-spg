@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { RefreshControl, ScrollView, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Card, Chip, Empty, Input, ListRow, Muted, SectionHeader } from '../../components/ui';
 import { SpgAvatar } from '../../components/pickers';
 import { useCurrentUser, useStore } from '../../store/useStore';
 import { FIELD_ROLES, OPS_ROLES, ROLE_LABEL } from '../../config';
-import { C, SP } from '../../theme';
+import { C, SP, T } from '../../theme';
 import type { DataStackParams } from './types';
 
 type Props = NativeStackScreenProps<DataStackParams, 'DataHome'>;
@@ -58,23 +59,44 @@ export default function DataHomeScreen({ navigation }: Props) {
           />
           {!canProvision && <Muted style={{ marginBottom: SP.sm }}>Akun SPG baru dibuat oleh back office atau super admin.</Muted>}
           {field.length === 0 && <Empty text="Belum ada SPG." icon="people-outline" />}
-          {field.map((p) => {
-            const trained = s.trainings.filter((t) => t.spgId === p.id).length;
-            const ready = p.documentsOk && p.phoneOk && p.bpjsRegistered && !!p.photoPath;
-            return (
-              <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: SP.sm }}>
-                <SpgAvatar name={p.name} path={p.photoPath} />
-                <View style={{ flex: 1 }}>
-                  <ListRow
-                    title={`${p.name}${p.role === 'coordinator' ? ' · Koordinator' : ''}`}
-                    subtitle={`@${p.username} · ${cityName(p.cityId)} · Grade ${p.grade ?? '-'} · ${trained} training`}
-                    emphasis={!p.active ? { color: C.muted, label: 'Nonaktif' } : ready ? { color: C.ok, label: 'Siap' } : { color: C.warn, label: 'Belum lengkap' }}
-                    onPress={() => navigation.navigate('SpgDetail', { id: p.id })}
-                  />
-                </View>
-              </View>
-            );
-          })}
+          <Card style={{ paddingVertical: SP.xs }}>
+            {field.map((p, i) => {
+              const trained = s.trainings.filter((t) => t.spgId === p.id).length;
+              const checks: { ok: boolean; icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
+                { ok: p.documentsOk, icon: 'document-text-outline', label: 'Dokumen' },
+                { ok: p.phoneOk, icon: 'phone-portrait-outline', label: 'HP' },
+                { ok: p.bpjsRegistered, icon: 'medkit-outline', label: 'BPJS' },
+                { ok: !!p.photoPath, icon: 'camera-outline', label: 'Foto' },
+                { ok: trained > 0, icon: 'school-outline', label: 'Training' },
+              ];
+              const missing = checks.filter((c) => !c.ok).map((c) => c.label);
+              return (
+                <TouchableOpacity
+                  key={p.id}
+                  onPress={() => navigation.navigate('SpgDetail', { id: p.id })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${p.name}, ${missing.length ? `belum: ${missing.join(', ')}` : 'siap ditugaskan'}`}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: SP.md, paddingVertical: SP.md, borderTopWidth: i ? 1 : 0, borderTopColor: C.divider, opacity: p.active ? 1 : 0.5 }}
+                >
+                  <SpgAvatar name={p.name} path={p.photoPath} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={T.h3}>{p.name}{p.role === 'coordinator' ? <Text style={{ color: C.muted }}>  Koordinator</Text> : null}</Text>
+                    <Text style={T.small}>{cityName(p.cityId)}, grade {p.grade ?? '-'}{p.active ? '' : ', nonaktif'}</Text>
+                    <View style={{ flexDirection: 'row', gap: SP.sm, marginTop: 2 }}>
+                      {checks.map((c) => (
+                        <Ionicons key={c.label} name={c.icon} size={16} color={c.ok ? C.okStrong : C.borderStrong} />
+                      ))}
+                    </View>
+                  </View>
+                  <Text style={[T.badge, { color: missing.length ? C.warnStrong : C.okStrong }]}>
+                    {missing.length ? `${missing.length} belum` : 'Siap'}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={18} color={C.faint} />
+                </TouchableOpacity>
+              );
+            })}
+          </Card>
+          {field.length > 0 && <Muted style={{ marginTop: SP.sm }}>Ikon hijau: dokumen, HP, BPJS, foto profil, training. Abu-abu berarti belum.</Muted>}
         </>
       )}
 

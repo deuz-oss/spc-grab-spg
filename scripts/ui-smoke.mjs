@@ -95,7 +95,7 @@ for (const t of tabs) {
   await shot(t);
   console.log(`${t.toUpperCase()}:`, (await p.innerText('body')).replace(/\s+/g, ' ').slice(-700));
   if (t === 'Request') {
-    await p.getByText('GrabFood New User · Kota Surabaya').first().click();
+    await p.getByRole('button', { name: /GrabFood New User/ }).first().click();
     await shot('request-detail');
     console.log('DETAIL:', (await p.innerText('body')).replace(/\s+/g, ' ').slice(400, 1300));
     if (role === 'pic') {

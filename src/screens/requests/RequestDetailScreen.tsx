@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Badge, Btn, Card, Chip, Empty, Field, Input, ListRow, Muted, scrollRegion, SectionHeader } from '../../components/ui';
 import { SpgAvatar } from '../../components/pickers';
@@ -8,9 +9,9 @@ import { useCurrentUser, useStore } from '../../store/useStore';
 import { useNow } from '../../components/useNow';
 import { candidates, coverage, defaultTimes, hiringSla, INELIGIBLE_LABEL, isLive, isTime, whyNot } from '../../utils/roster';
 import { programDayKey } from '../../utils/period';
-import { fmtDateTime } from '../../utils/format';
+import { fmtDateTime, fmtDayShort } from '../../utils/format';
 import { OPS_ROLES } from '../../config';
-import { C, SP, T } from '../../theme';
+import { C, ELEV, SP, T, toneOf } from '../../theme';
 import type { Profile, Replacement, Shift } from '../../types';
 import type { RequestsStackParams } from './types';
 import { PACKAGE_LABEL, REPLACEMENT_REASON, REQUEST_STATUS, SLA_META } from './labels';
@@ -127,18 +128,29 @@ export default function RequestDetailScreen({ route, navigation }: Props) {
 
   return (
     <ScrollView contentContainerStyle={{ padding: SP.lg }} keyboardShouldPersistTaps="handled" {...scrollRegion('Detail request')}>
-      <SectionHeader title={camp?.name ?? 'Request'} subtitle={`${city?.name ?? ''} · ${venue?.name ?? ''}`} />
-      <Card style={{ marginBottom: SP.md, gap: SP.xs }}>
-        <View style={{ flexDirection: 'row', gap: SP.sm, flexWrap: 'wrap' }}>
-          <Badge label={st.label} color={st.color} />
-          <Badge label={`SLA hiring ${sla.label}`} color={sla.color} />
+      <View style={{ backgroundColor: C.primary, borderRadius: 20, padding: SP.lg, gap: SP.sm, marginBottom: SP.lg, ...ELEV[2] }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: SP.sm }}>
+          <Text style={[T.label, { color: C.onDarkMuted, flex: 1 }]}>{city?.name ?? ''}, {venue?.name ?? ''}</Text>
+          <View style={{ backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 999, paddingHorizontal: SP.md, paddingVertical: 4 }}>
+            <Text style={[T.badge, { color: C.onDark }]}>{st.label}</Text>
+          </View>
         </View>
-        <Text style={T.body}>{req.startDate} s/d {req.endDate} · {req.headcount} SPG/hari · grade {req.grade}</Text>
-        <Muted>{req.shiftHours} jam{req.shiftHours === 10 ? ' (8 normal + 2 lembur)' : ''} · {PACKAGE_LABEL[req.package]}</Muted>
-        <Muted>Masuk {fmtDateTime(req.submittedAt)} · batas SLA {fmtDateTime(req.slaHiringDue)}{req.staffedAt ? ` · terisi ${fmtDateTime(req.staffedAt)}` : ''}</Muted>
-        {venue?.address ? <Muted>{venue.address}</Muted> : null}
-        {req.notes ? <Muted>Catatan: {req.notes}</Muted> : null}
-      </Card>
+        <Text style={[T.h1, { color: C.onDark }]}>{camp?.name ?? 'Request'}</Text>
+        <Text style={[T.timer, { color: C.onDark, fontSize: 26, lineHeight: 32 }]}>
+          {req.startDate === req.endDate ? fmtDayShort(req.startDate) : `${fmtDayShort(req.startDate)} – ${fmtDayShort(req.endDate)}`}
+        </Text>
+        <Text style={[T.body, { color: C.onDarkMuted }]}>
+          {req.headcount} SPG per hari, grade {req.grade} ke atas. {req.shiftHours} jam{req.shiftHours === 10 ? ' (8 normal + 2 lembur)' : ''}, {PACKAGE_LABEL[req.package].toLowerCase()}.
+        </Text>
+        {venue?.address ? <Text style={[T.small, { color: C.onDarkMuted }]}>{venue.address}</Text> : null}
+        {req.notes ? <Text style={[T.small, { color: C.onDarkMuted }]}>Catatan: {req.notes}</Text> : null}
+        <View style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.14)', paddingTop: SP.sm, marginTop: SP.xs, gap: 2 }}>
+          <Text style={[T.label, { color: sla.color === C.accent ? C.gold : C.onDark }]}>SLA hiring {sla.label}</Text>
+          <Text style={[T.meta, { color: C.onDarkMuted }]}>
+            Masuk {fmtDateTime(req.submittedAt)}, batas {fmtDateTime(req.slaHiringDue)}{req.staffedAt ? `, roster lengkap ${fmtDateTime(req.staffedAt)}` : ''}
+          </Text>
+        </View>
+      </View>
 
       {openRepl.length > 0 && (
         <>
@@ -170,7 +182,7 @@ export default function RequestDetailScreen({ route, navigation }: Props) {
         return (
           <Card key={d.date} style={{ marginBottom: SP.sm }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={T.label}>{d.date === today ? `Hari ini · ${d.date}` : d.date}</Text>
+              <Text style={T.h3}>{d.date === today ? `Hari ini, ${fmtDayShort(d.date)}` : fmtDayShort(d.date)}</Text>
               <Badge label={`${d.scheduled}/${d.needed}${noShows ? ` · ${noShows} tidak hadir` : ''}`} color={short ? C.warn : C.ok} />
             </View>
             {day.length === 0 && <Muted>Belum ada SPG.</Muted>}
@@ -178,17 +190,24 @@ export default function RequestDetailScreen({ route, navigation }: Props) {
               const p = profileOf(x.spgId);
               const ss = SHIFT_STATUS[x.status];
               return (
-                <View key={x.id} style={{ flexDirection: 'row', alignItems: 'center', gap: SP.sm, marginTop: SP.sm }}>
+                <TouchableOpacity
+                  key={x.id}
+                  disabled={!editable}
+                  onPress={() => shiftMenu(x)}
+                  accessibilityRole={editable ? 'button' : undefined}
+                  accessibilityLabel={`${p?.name ?? 'SPG'}, ${ss.label}`}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: SP.md, paddingVertical: SP.sm, borderTopWidth: 1, borderTopColor: C.divider, opacity: isLive(x) ? 1 : 0.55 }}
+                >
                   <SpgAvatar name={p?.name ?? '?'} path={p?.photoPath ?? null} />
                   <View style={{ flex: 1 }}>
-                    <ListRow
-                      title={`${p?.name ?? 'SPG'}${p?.grade ? ` · Grade ${p.grade}` : ''}`}
-                      subtitle={`${x.plannedStart.slice(0, 5)}–${x.plannedEnd.slice(0, 5)}${x.replacesShiftId ? ' · pengganti' : ''}`}
-                      emphasis={{ color: ss.color, label: ss.label }}
-                      onPress={editable ? () => shiftMenu(x) : undefined}
-                    />
+                    <Text style={T.h3}>{p?.name ?? 'SPG'}{p?.grade ? <Text style={{ color: C.muted }}>  Grade {p.grade}</Text> : null}</Text>
+                    <Text style={T.small}>{x.plannedStart.slice(0, 5)}–{x.plannedEnd.slice(0, 5)}{x.replacesShiftId ? ', pengganti' : ''}</Text>
                   </View>
-                </View>
+                  <View style={{ backgroundColor: toneOf(ss.color).bg, borderRadius: 999, paddingHorizontal: SP.sm, paddingVertical: 3 }}>
+                    <Text style={[T.badge, { color: toneOf(ss.color).fg }]}>{ss.label}</Text>
+                  </View>
+                  {editable && <Ionicons name="ellipsis-vertical" size={18} color={C.faint} />}
+                </TouchableOpacity>
               );
             })}
           </Card>
