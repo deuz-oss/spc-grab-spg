@@ -38,6 +38,10 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.CAMERA"
       ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -58,7 +62,8 @@
         "expo-image-picker",
         {
           "cameraPermission": "Kamera dipakai untuk selfie absensi dan foto bukti KPI.",
-          "photosPermission": false
+          "photosPermission": false,
+          "microphonePermission": false
         }
       ]
     ],

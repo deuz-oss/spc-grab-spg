@@ -128,6 +128,12 @@ eas build -p android --profile development  # dev client, only if debugging on t
 
 The build page gives a QR / link to install the APK. Android will ask to allow installs from that source.
 
+Android permissions are listed explicitly in `app.json` (`src/tasks/androidPermissions.test.ts` checks them): the
+background location task needs `RECEIVE_BOOT_COMPLETED` (without it the app crashed on the first GPS fix, 15 Oct).
+`RECORD_AUDIO` (video in expo-image-picker) and `SYSTEM_ALERT_WINDOW` are blocked — photos only. The storage
+permissions expo-image-picker declares for Android 12 and older are kept until camera and gallery are checked on an
+older phone without them.
+
 ## Open items (from the spec)
 
 - Edge function `purge-media` deployed to staging 11 Oct 2026 (version 1, source identical to `main`) but **not yet scheduled** — needs the service key in Vault (see "Retention" below).
