@@ -23,7 +23,7 @@ async function currentPosition(): Promise<Coords | null> {
     return await requestCurrentCoords();
   } catch (e) {
     if (e instanceof LocationPermissionDeniedError) {
-      showDialog('Izin Lokasi Diperlukan', 'Clock-in membutuhkan lokasi HP. Izinkan lokasi untuk aplikasi ini di Pengaturan.');
+      showDialog('Izin lokasi diperlukan', 'Clock-in membutuhkan lokasi HP. Izinkan lokasi untuk aplikasi ini di Pengaturan.');
       return null;
     }
     throw new Error('Lokasi HP belum didapat. Pastikan GPS menyala, pindah ke dekat pintu masuk, lalu coba lagi.');
@@ -33,7 +33,7 @@ async function currentPosition(): Promise<Coords | null> {
 async function takeSelfie(): Promise<string | null> {
   const perm = await ImagePicker.requestCameraPermissionsAsync();
   if (!perm.granted) {
-    showDialog('Izin Kamera Diperlukan', 'Selfie absensi harus diambil langsung dengan kamera.');
+    showDialog('Izin kamera diperlukan', 'Selfie absensi harus diambil langsung dengan kamera.');
     return null;
   }
   const res = await ImagePicker.launchCameraAsync({ quality: 0.4, cameraType: ImagePicker.CameraType.front });
@@ -68,21 +68,21 @@ function ShiftCard({ shift, venue, campaign, attendance }: { shift: Shift; venue
         showToast('Clock-in tercatat');
       };
       if (pos.mocked) {
-        showDialog('Lokasi Palsu Terdeteksi', 'Matikan aplikasi pengubah lokasi lalu coba lagi.');
+        showDialog('Lokasi palsu terdeteksi', 'Matikan aplikasi pengubah lokasi lalu coba lagi.');
       } else if (!fence.inside) {
         showDialog(
-          'Di Luar Lokasi',
+          'Di luar lokasi',
           `Anda ${fence.distanceM} m dari ${venue.name} (batas ${venue.radiusM} m). Clock-in tetap bisa, tapi akan ditandai dan dicek PIC.` +
             (pos.accuracyM != null && pos.accuracyM > venue.radiusM
               ? `\n\nSinyal GPS lemah (akurasi ±${Math.round(pos.accuracyM)} m). Kalau Anda sudah di venue, coba lagi di dekat pintu masuk atau jendela.`
               : ''),
-          [{ label: 'Batal' }, { label: 'Tetap Clock-in', onPress: () => void proceed().catch((e) => showDialog('Gagal', String(e.message ?? e))) }],
+          [{ label: 'Batal' }, { label: 'Tetap clock-in', onPress: () => void proceed().catch((e) => showDialog('Gagal', String(e.message ?? e))) }],
         );
       } else {
         await proceed();
       }
     } catch (e) {
-      showDialog('Gagal Clock-in', e instanceof Error ? e.message : String(e));
+      showDialog('Gagal clock-in', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -101,7 +101,7 @@ function ShiftCard({ shift, venue, campaign, attendance }: { shift: Shift; venue
             await clockOut(attendance.id, pos);
             showToast('Clock-out tercatat');
           } catch (e) {
-            showDialog('Gagal Clock-out', e instanceof Error ? e.message : String(e));
+            showDialog('Gagal clock-out', e instanceof Error ? e.message : String(e));
           }
         },
       },
@@ -256,13 +256,13 @@ function KpiCounter({ shift, field }: { shift: Shift; field: KpiField }) {
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
-    if (field.proof_required && !proof) return showDialog('Foto Bukti Wajib', 'Ambil foto bukti. Jangan memotret data pribadi pelanggan.');
+    if (field.proof_required && !proof) return showDialog('Foto bukti wajib', 'Ambil foto bukti. Jangan memotret data pribadi pelanggan.');
     setBusy(true);
     try {
       await submitKpi(shift.id, field.key, value, proof ?? undefined);
       showToast(`${field.label}: ${value} tersimpan`);
     } catch (e) {
-      showDialog('Gagal Menyimpan', e instanceof Error ? e.message : String(e));
+      showDialog('Gagal menyimpan', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }

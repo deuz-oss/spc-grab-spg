@@ -40,25 +40,25 @@ export default function VenueFormScreen({ route, navigation }: Props) {
   const here = async () => {
     try {
       const c = await requestCurrentCoords();
-      if (c.mocked) return showDialog('Lokasi Palsu', 'Matikan aplikasi pemalsu lokasi lalu coba lagi.');
+      if (c.mocked) return showDialog('Lokasi palsu', 'Matikan aplikasi pemalsu lokasi lalu coba lagi.');
       setCoords(`${c.lat.toFixed(6)}, ${c.lng.toFixed(6)}`);
     } catch (e) {
-      showDialog('Lokasi Tidak Didapat', e instanceof Error ? e.message : String(e));
+      showDialog('Lokasi tidak didapat', e instanceof Error ? e.message : String(e));
     }
   };
 
   const save = async () => {
     const r = Number(radius);
-    if (!cityId || !name.trim()) return showDialog('Lengkapi Venue', 'Kota dan nama venue wajib.');
-    if (!pos) return showDialog('Koordinat Tidak Valid', 'Format: -7.2625, 112.7389 (di wilayah Indonesia).');
-    if (!Number.isInteger(r) || r < 30 || r > 1000) return showDialog('Radius Tidak Valid', 'Radius 30–1000 meter.');
+    if (!cityId || !name.trim()) return showDialog('Lengkapi venue', 'Kota dan nama venue wajib.');
+    if (!pos) return showDialog('Koordinat tidak valid', 'Format: -7.2625, 112.7389 (di wilayah Indonesia).');
+    if (!Number.isInteger(r) || r < 30 || r > 1000) return showDialog('Radius tidak valid', 'Radius 30–1000 meter.');
     setBusy(true);
     try {
       await s.saveVenue({ id: existing?.id, cityId, name: name.trim(), address: address.trim(), lat: pos.lat, lng: pos.lng, radiusM: r });
       showToast('Venue tersimpan');
       navigation.goBack();
     } catch (e) {
-      showDialog('Gagal Menyimpan', e instanceof Error ? e.message : String(e));
+      showDialog('Gagal menyimpan', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -83,7 +83,7 @@ export default function VenueFormScreen({ route, navigation }: Props) {
           <LeafletMap markers={[{ ...pos, label: name || 'Venue' }]} center={pos} zoom={17} height={220} />
         </Card>
       )}
-      <Btn title="Simpan Venue" onPress={save} loading={busy} />
+      <Btn title="Simpan venue" onPress={save} loading={busy} />
     </ScrollView>
   );
 }

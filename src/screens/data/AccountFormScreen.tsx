@@ -31,11 +31,11 @@ export default function AccountFormScreen({ route, navigation }: Props) {
 
   const submit = async () => {
     const u = username.trim().toLowerCase();
-    if (!name.trim()) return showDialog('Lengkapi Data', 'Nama wajib diisi.');
-    if (!/^[a-z0-9._-]{3,40}$/.test(u)) return showDialog('Username Tidak Valid', '3–40 karakter: huruf kecil, angka, titik, garis bawah, atau strip.');
+    if (!name.trim()) return showDialog('Lengkapi data', 'Nama wajib diisi.');
+    if (!/^[a-z0-9._-]{3,40}$/.test(u)) return showDialog('Username tidak valid', '3–40 karakter: huruf kecil, angka, titik, garis bawah, atau strip.');
     const pw = passwordProblem(password, u);
-    if (pw) return showDialog('Password Belum Sesuai', pw);
-    if (field && !cityId) return showDialog('Lengkapi Data', 'Pilih kota.');
+    if (pw) return showDialog('Password belum sesuai', pw);
+    if (field && !cityId) return showDialog('Lengkapi data', 'Pilih kota.');
     setBusy(true);
     try {
       await s.createAccount({
@@ -45,7 +45,7 @@ export default function AccountFormScreen({ route, navigation }: Props) {
       showToast(`Akun @${u} dibuat dan aktif`);
       navigation.goBack();
     } catch (e) {
-      showDialog('Gagal Membuat Akun', e instanceof Error ? e.message : String(e));
+      showDialog('Gagal membuat akun', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -74,7 +74,7 @@ export default function AccountFormScreen({ route, navigation }: Props) {
         </>
       )}
       {role === 'grab_viewer' && <Muted>Akun Grab hanya membaca dan bisa mengirim request. Tidak melihat nomor HP, selfie, atau riwayat GPS.</Muted>}
-      <Btn title="Buat Akun" onPress={submit} loading={busy} />
+      <Btn title="Buat akun" onPress={submit} loading={busy} />
     </ScrollView>
   );
 }

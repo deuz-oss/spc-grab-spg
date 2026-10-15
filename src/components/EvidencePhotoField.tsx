@@ -31,7 +31,7 @@ export function EvidencePhotoField({
   const take = async () => {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
-      showDialog('Izin Kamera Diperlukan', 'Foto bukti harus diambil langsung dengan kamera. Izinkan kamera untuk aplikasi ini di Pengaturan HP.');
+      showDialog('Izin kamera diperlukan', 'Foto bukti harus diambil langsung dengan kamera. Izinkan kamera untuk aplikasi ini di Pengaturan HP.');
       return;
     }
     const res = await ImagePicker.launchCameraAsync({ quality: 0.4 });
@@ -60,7 +60,7 @@ export function EvidencePhotoField({
         </View>
         <View style={{ flexDirection: 'row', gap: SP.sm }}>
           <View style={{ flex: 1 }}>
-            <Btn variant="outline" title={Platform.OS === 'web' ? 'Ganti Foto' : 'Ulangi Foto'} onPress={capture} />
+            <Btn variant="outline" title={Platform.OS === 'web' ? 'Ganti foto' : 'Ulangi foto'} onPress={capture} />
           </View>
           <View style={{ flex: 1 }}>
             <Btn variant="outline" title="Hapus" onPress={() => onChange(null)} accessibilityLabel="Hapus foto" />
@@ -81,7 +81,7 @@ export function EvidencePhotoField({
           </View>
         ))}
       </View>
-      <Btn variant="outline" title={Platform.OS === 'web' ? 'Pilih Foto' : 'Ambil Foto'} onPress={capture} />
+      <Btn variant="outline" title={Platform.OS === 'web' ? 'Pilih foto' : 'Ambil foto'} onPress={capture} />
       {Platform.OS !== 'web' && <Text style={T.small}>Foto diambil langsung dengan kamera — foto dari galeri tidak bisa dipakai.</Text>}
     </View>
   );

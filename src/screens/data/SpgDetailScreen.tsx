@@ -64,7 +64,7 @@ export default function SpgDetailScreen({ route }: Props) {
       res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
     } else {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
-      if (!perm.granted) return showDialog('Izin Kamera Diperlukan', 'Izinkan kamera untuk mengambil foto SPG.');
+      if (!perm.granted) return showDialog('Izin kamera diperlukan', 'Izinkan kamera untuk mengambil foto SPG.');
       res = await ImagePicker.launchCameraAsync({ quality: 0.5, allowsEditing: true, aspect: [1, 1] });
     }
     if (res.canceled || !res.assets[0]) return;
@@ -72,9 +72,9 @@ export default function SpgDetailScreen({ route }: Props) {
   };
 
   const addTraining = () => {
-    if (!campaignId) return showDialog('Pilih Campaign', 'Pilih campaign yang training-nya lulus.');
+    if (!campaignId) return showDialog('Pilih campaign', 'Pilih campaign yang training-nya lulus.');
     const n = score.trim() === '' ? null : Number(score);
-    if (n != null && (!Number.isFinite(n) || n < 0 || n > 100)) return showDialog('Nilai Tidak Valid', 'Nilai 0–100 atau kosongkan.');
+    if (n != null && (!Number.isFinite(n) || n < 0 || n > 100)) return showDialog('Nilai tidak valid', 'Nilai 0–100 atau kosongkan.');
     void run('training', () => s.recordTraining(p.id, campaignId, n), 'Training lulus tercatat');
     setCampaignId(null);
     setScore('');
@@ -82,7 +82,7 @@ export default function SpgDetailScreen({ route }: Props) {
 
   const resetPassword = () => {
     const err = passwordProblem(password, p.username);
-    if (err) return showDialog('Password Belum Sesuai', err);
+    if (err) return showDialog('Password belum sesuai', err);
     void run('pw', () => s.setPassword(p.id, password), 'Password diganti — beri tahu pemilik akun');
     setPassword('');
   };

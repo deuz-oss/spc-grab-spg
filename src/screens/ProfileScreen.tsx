@@ -16,15 +16,15 @@ export default function ProfileScreen() {
   const sync = async () => {
     const r = await syncQueue();
     if (r.failed.length) {
-      showDialog('Sebagian Data Ditolak Server', r.failed.map((op) => OP_LABEL[op.type]).join(', '));
+      showDialog('Sebagian data ditolak server', r.failed.map((op) => OP_LABEL[op.type]).join(', '));
     } else showToast(r.synced ? `${r.synced} data terkirim` : 'Tidak ada yang perlu dikirim', 'info');
   };
 
   const confirmSignOut = () => {
     if (queue.length) {
-      showDialog('Masih Ada Data Belum Terkirim', 'Data tetap tersimpan di HP ini dan akan dikirim saat Anda masuk lagi.', [
+      showDialog('Masih ada data belum terkirim', 'Data tetap tersimpan di HP ini dan akan dikirim saat Anda masuk lagi.', [
         { label: 'Batal' },
-        { label: 'Tetap Keluar', destructive: true, onPress: () => void signOut() },
+        { label: 'Tetap keluar', destructive: true, onPress: () => void signOut() },
       ]);
     } else void signOut();
   };
@@ -44,7 +44,7 @@ export default function ProfileScreen() {
           <Muted key={op.id}>• {OP_LABEL[op.type]}</Muted>
         ))}
         <View style={{ marginTop: SP.sm }}>
-          <Btn title="Kirim Sekarang" variant="outline" small onPress={sync} loading={syncing} disabled={!queue.length} />
+          <Btn title="Kirim sekarang" variant="outline" small onPress={sync} loading={syncing} disabled={!queue.length} />
         </View>
       </Card>
       <Btn title="Keluar" variant="danger" onPress={confirmSignOut} />

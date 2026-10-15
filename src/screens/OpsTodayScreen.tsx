@@ -61,7 +61,7 @@ export default function OpsTodayScreen() {
       await s.resolveException(e.id, status, notes[e.id] ?? '');
       showToast(status === 'resolved' ? 'Exception selesai' : 'Exception dikecualikan');
     } catch (err) {
-      showDialog('Belum Tersimpan', err instanceof Error ? err.message : String(err));
+      showDialog('Belum tersimpan', err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(null);
     }
@@ -74,7 +74,7 @@ export default function OpsTodayScreen() {
       showToast(ok > 1 ? `${ok} shift divalidasi` : 'Shift divalidasi');
     } catch (err) {
       // Shifts before the refused one are validated; the reload shows which are left.
-      showDialog('Validasi Terhenti', err instanceof Error ? err.message : String(err));
+      showDialog('Validasi terhenti', err instanceof Error ? err.message : String(err));
     } finally {
       setBusy(null);
     }

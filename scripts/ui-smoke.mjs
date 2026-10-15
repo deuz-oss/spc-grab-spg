@@ -83,7 +83,7 @@ await p.waitForTimeout(2500);
 await shot('home');
 if (role === 'spg' && !process.argv[3]) {
   console.log('CONSENT:', (await p.innerText('body')).replace(/\s+/g, ' ').slice(0, 300));
-  await p.getByRole('button', { name: 'Saya Setuju' }).click();
+  await p.getByRole('button', { name: 'Saya setuju' }).click();
   await p.waitForTimeout(1500);
 }
 const body = async () => (await p.innerText('body')).replace(/\s+/g, ' ').slice(0, 400);
@@ -101,7 +101,7 @@ for (const t of tabs) {
     if (role === 'pic') {
       await p.getByText(/^10-1\d \(0\/2\)$/).last().click();
       await p.getByText('Sari Wulandari · Grade B').last().click();
-      await p.getByText(/^Jadwalkan 1 Shift$/).last().click();
+      await p.getByText(/^Jadwalkan 1 shift$/).last().click();
       await p.waitForTimeout(1500);
       await shot('scheduled');
     }
