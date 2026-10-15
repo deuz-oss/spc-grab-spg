@@ -6,12 +6,22 @@ test('attendance: server-computed fields and null clock-out', () => {
   const a = mapAttendance({
     id: 'a1', shift_id: 's1', user_id: 'u1', clock_in_at: '2026-11-02T01:00:00Z', clock_in_lat: -7.26,
     clock_in_lng: 112.74, mocked: false, geo_valid: false, distance_m: '301', late_min: 20, clock_out_at: null,
-    auto_closed: false,
+    auto_closed: false, accuracy_m: '1850.4',
   });
   assert.equal(a.clockInAt, Date.parse('2026-11-02T01:00:00Z'));
   assert.equal(a.distanceM, 301);
+  assert.equal(a.accuracyM, 1850.4);
   assert.equal(a.geoValid, false);
   assert.equal(a.clockOutAt, null);
+});
+
+test('attendance: no accuracy from the phone stays null', () => {
+  const a = mapAttendance({
+    id: 'a2', shift_id: 's2', user_id: 'u1', clock_in_at: '2026-11-02T01:00:00Z', clock_in_lat: -7.26,
+    clock_in_lng: 112.74, mocked: false, geo_valid: true, distance_m: '20', late_min: 0, clock_out_at: null,
+    auto_closed: false, accuracy_m: null,
+  });
+  assert.equal(a.accuracyM, null);
 });
 
 test('campaign: KPI template defaults are filled', () => {

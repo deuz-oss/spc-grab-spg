@@ -5,6 +5,8 @@ export interface Coords {
   lng: number;
   /** Android reports positions from a mock-location (fake GPS) app; always false elsewhere. */
   mocked: boolean;
+  /** Radius in metres the phone is ~68% sure of; null when it does not say. A network fallback can be kilometres. */
+  accuracyM: number | null;
 }
 
 export const MOCK_LOCATION_TITLE = 'Lokasi Palsu Terdeteksi';
@@ -57,7 +59,7 @@ export async function requestCurrentCoords(): Promise<Coords> {
   const { status } = await Location.requestForegroundPermissionsAsync();
   if (status !== 'granted') throw new LocationPermissionDeniedError();
   const pos = await readPosition();
-  return { lat: pos.coords.latitude, lng: pos.coords.longitude, mocked: pos.mocked === true };
+  return { lat: pos.coords.latitude, lng: pos.coords.longitude, mocked: pos.mocked === true, accuracyM: pos.coords.accuracy ?? null };
 }
 
 /** Minta izin lalu ambil posisi sekarang; null bila izin ditolak/gagal */

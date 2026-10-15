@@ -103,6 +103,8 @@ export interface Attendance {
   clockInAt: number;
   clockInLat: number;
   clockInLng: number;
+  /** GPS accuracy of the clock-in fix in metres; absent on clock-ins queued by older builds. */
+  accuracyM?: number | null;
   mocked: boolean;
   /** Server-computed; null until the server has the row (queued offline). */
   geoValid: boolean | null;
