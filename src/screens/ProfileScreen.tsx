@@ -6,6 +6,7 @@ import { useCurrentUser, useStore } from '../store/useStore';
 import { ROLE_LABEL } from '../config';
 import { OP_LABEL } from '../store/replay';
 import { fmtDateTime } from '../utils/format';
+import { APP_VERSION } from '../lib/appInfo';
 import { SP, T } from '../theme';
 
 export default function ProfileScreen() {
@@ -48,6 +49,7 @@ export default function ProfileScreen() {
         </View>
       </Card>
       <Btn title="Keluar" variant="danger" onPress={confirmSignOut} />
+      <Muted style={{ textAlign: 'center', marginTop: SP.lg }}>Versi aplikasi {APP_VERSION}</Muted>
     </ScrollView>
   );
 }
