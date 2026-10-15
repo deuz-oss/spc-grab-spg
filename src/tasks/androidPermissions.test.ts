@@ -21,3 +21,12 @@ test('background location task has every permission it needs on Android', () => 
     assert.ok(permissions.includes(`android.permission.${p}`), `app.json is missing android.permission.${p}`);
   }
 });
+
+test('no microphone or draw-over-other-apps permission (photos only; SPG personal data, UU PDP)', () => {
+  // expo-image-picker adds RECORD_AUDIO for video and the Expo template adds SYSTEM_ALERT_WINDOW; neither is used.
+  const blocked: string[] = app.expo.android.blockedPermissions ?? [];
+  for (const p of ['RECORD_AUDIO', 'SYSTEM_ALERT_WINDOW']) {
+    assert.ok(blocked.includes(`android.permission.${p}`), `app.json does not block android.permission.${p}`);
+    assert.ok(!permissions.includes(`android.permission.${p}`), `app.json requests android.permission.${p}`);
+  }
+});
