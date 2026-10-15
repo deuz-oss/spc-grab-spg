@@ -113,6 +113,21 @@ $job$);
 20:00 UTC = 03:00 WIB, half an hour after the SQL step. The response (purged / skipped / errors) is in
 `net._http_response` and the function logs.
 
+### Android build for the pilot (EAS)
+
+`.env` is not uploaded to EAS, so the `development` and `preview` profiles in `eas.json` carry the staging URL and
+publishable key themselves (public values; access control is RLS). Production gets its own project and keys.
+
+```bash
+npm i -g eas-cli
+eas login                      # SPC's Expo account
+eas init                       # once: links the project, writes extra.eas.projectId into app.json — commit it
+eas build -p android --profile preview      # installable APK for the 5-SPG pilot (staging backend)
+eas build -p android --profile development  # dev client, only if debugging on the phone
+```
+
+The build page gives a QR / link to install the APK. Android will ask to allow installs from that source.
+
 ## Open items (from the spec)
 
 - Edge function `purge-media` deployed to staging 11 Oct 2026 (version 1, source identical to `main`) but **not yet scheduled** — needs the service key in Vault (see "Retention" below).
