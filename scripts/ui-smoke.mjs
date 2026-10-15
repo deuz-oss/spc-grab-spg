@@ -88,7 +88,7 @@ if (role === 'spg' && !process.argv[3]) {
 }
 const body = async () => (await p.innerText('body')).replace(/\s+/g, ' ').slice(0, 400);
 console.log('HOME:', await body());
-const tabs = { pic: ['Request', 'Peta', 'Laporan', 'Data'], grab_viewer: ['Request', 'Peta', 'Laporan'], back_office: ['Data', 'Laporan'], spg: ['Jadwal'], super_admin: ['Data'] }[role] ?? [];
+const tabs = { pic: ['Request', 'Peta', 'Laporan', 'Data'], grab_viewer: ['Request', 'Peta', 'Laporan'], back_office: ['Data', 'Laporan'], spg: ['Jadwal', 'Profil'], super_admin: ['Data'] }[role] ?? [];
 for (const t of tabs) {
   await p.locator('a[role="tab"], [role="tab"], [href]').filter({ hasText: new RegExp(`^${t}$`) }).first().click({ timeout: 5000 })
     .catch(async () => p.getByText(t, { exact: true }).last().click({ timeout: 5000 }));

@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
+import { APP_VERSION } from '../lib/appInfo';
 import { supabase } from '../lib/supabase';
 import { captureToSentry } from '../sentry';
 
@@ -39,7 +39,7 @@ export function reportError(error: unknown, context: string): void {
         stack: err.stack?.slice(0, 8000) ?? null,
         context: context.slice(0, 200),
         platform: `${Platform.OS} ${String(Platform.Version ?? '')}`.trim().slice(0, 40),
-        app_version: (Constants.expoConfig?.version ?? '').slice(0, 40),
+        app_version: APP_VERSION.slice(0, 40),
       });
     })().catch(() => undefined);
   } catch {
