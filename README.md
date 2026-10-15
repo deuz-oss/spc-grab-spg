@@ -12,9 +12,9 @@ loop: **request → schedule → geotag clock-in → KPI → server checks → P
 | Phase (spec) | Dates | State |
 |---|---|---|
 | Spec approval | 10–12 Oct | ✅ approved 9 Oct |
-| Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 64 smoke checks pass on Postgres 16 |
+| Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 85 smoke checks pass on Postgres 16 |
 | Foundation: app scaffold | 13–17 Oct | ✅ login, SPG today (selfie clock-in, KPI, clock-out, offline queue), PIC/Grab today (exception queue, validation), profile — tsc, lint, 56 unit tests, web bundle green |
-| Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9–11 Oct | ✅ migrations `0001`–`0011` applied (the retention purge was pasted in the SQL Editor). All 5 cron jobs live (no-shows, auto-close, daily report, request status, retention). Schema checked object by object against the repo on 11 Oct: identical apart from comments. Edge function `admin-users` v2. Demo data from `supabase/seed/staging_demo.sql` (6 accounts, one per role) |
+| Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9–11 Oct | ✅ migrations `0001`–`0012` applied (the retention purge was pasted in the SQL Editor). All 5 cron jobs live (no-shows, auto-close, daily report, request status, retention). Schema checked object by object against the repo on 11 Oct: identical apart from comments. Edge function `admin-users` v2. Demo data from `supabase/seed/staging_demo.sql` (6 accounts, one per role) |
 | Foundation: Android dev build on a real phone | 13–17 Oct | ⬜ needs EAS project |
 | Core loop screens | 19–24 Oct | ✅ built 9 Oct — requests & roster, scheduling with grade/training checks, replacements, live map, consent, daily report publish, CSV exports (attendance, payroll, billing), SPG onboarding, venues, campaigns, accounts. Verified on staging via SQL as each role and in a mocked-backend browser run; not yet on a real phone |
 | Reports, payroll export, pilot (5 SPG) | 26–30 Oct | ⬜ |
@@ -36,6 +36,7 @@ Migrations in `supabase/migrations/`, applied in filename order to a Supabase pr
 | `0009_audit_hardening.sql` | Audit 11 Oct 2026 (`docs/audit/`): API callers cannot set shift status/validation/overtime (billing), request SLA fields, the clock-in selfie, or another person's consent; daily report no longer counts replaced shifts. Applied to staging 11 Oct 2026 |
 | `0010_late_arrival_and_resolve.sql` | No clock-in on a shift already marked no-show (the SPG is told to call the PIC); resolving an already-closed exception says so. Applied to staging 11 Oct 2026 |
 | `0011_anon_grants_tidy.sql` | Signed-out callers execute no function at all (two helpers had slipped through); `retention_months()` gets a fixed `search_path`. Applied to staging 11 Oct 2026 |
+| `0012_kpi_outlier.sql` | KPI outlier: a shift total at 3x or more the 7-day median of the same campaign field (at least 5 shifts to compare) opens a `kpi_outlier` exception, which blocks billing until the PIC resolves or waives it. Applied to staging 15 Oct 2026 |
 | `0005_hardening.sql` | From the Supabase security advisor: signed-out callers execute no function, trigger functions are not callable over the API, fixed `search_path` everywhere |
 
 Rules that live in the database, not the phone:
@@ -115,10 +116,9 @@ $job$);
 ## Open items (from the spec)
 
 - Edge function `purge-media` deployed to staging 11 Oct 2026 (version 1, source identical to `main`) but **not yet scheduled** — needs the service key in Vault (see "Retention" below).
-- KPI outlier rule (P2), billing lines per month (P2), Grab self-service request form (P2).
+- Billing lines per month (P2), Grab self-service request form (P2). KPI outlier rule done in `0012` (3x the 7-day median, at least 5 shifts to compare).
 - Inherited from the reference: iOS background location unvalidated, EAS production build never run, push unverified,
   map tiles must move to a keyed provider before go-live.
-- `assets/` still holds the reference repo's placeholder icons (gold "NC" badge). Replace with SPC / programme artwork
-  before any build is shown to Grab or installed by SPG — same filenames and sizes.
+- `assets/` icons are the programme's own (amber shift pass on ink, 15 Oct; generator kept outside the repo). Swap for SPC brand artwork if SPC has one — same filenames and sizes.
 - `src/lib/database.types.ts` is generated from staging; regenerate after every migration.
 - The Supabase MCP connector refuses SQL containing DELETE: such migrations are pasted into the SQL Editor (as done for the retention purge).

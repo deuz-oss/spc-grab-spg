@@ -391,4 +391,47 @@ select tests.fails($$select public.resolve_exception((select id from public.exce
                    'sudah ditutup', 'resolving an already-closed exception says so');
 reset role;
 
+
+-- ---------------------------------------------------------------- KPI outlier vs 7-day median (migration 0012)
+select tests.as_user(null);
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('00000000-0000-0000-0000-0000000000e6', 'spg6@internal.spc', '{"username":"spg6"}'),
+  ('00000000-0000-0000-0000-0000000000e7', 'spg7@internal.spc', '{"username":"spg7"}');
+update public.profiles set active = true, role = 'spg', grade = 'A', contract_type = 'daily_worker', city_id = 'kota-surabaya',
+       consent_version = 'test-v1' where username in ('spg6', 'spg7');
+insert into public.requests (id, campaign_id, city_id, venue_id, grade, headcount, start_date, end_date, shift_hours, package)
+values ('r_kpi', 'c_food', 'kota-surabaya', 'v_tp', 'C', 1, public.wib(now())::date - 6, public.wib(now())::date, 8, 'daily');
+-- history written without triggers: five earlier shifts of spg6 with 10, 12, 8, 11, 9 contacts (with the
+-- other contacts logged earlier in this test the 7-day median stays near 10, so 25 passes and 40 is flagged)
+set session_replication_role = replica;
+insert into public.shifts (id, request_id, venue_id, spg_id, shift_date, planned_start, planned_end, status)
+  select 'sk' || i, 'r_kpi', 'v_tp', '00000000-0000-0000-0000-0000000000e6', public.wib(now())::date - i, '00:00', '23:59', 'done'
+    from generate_series(1, 5) i;
+insert into public.kpi_logs (id, shift_id, spg_id, field_key, value, logged_at)
+  select 'kk' || i, 'sk' || i, '00000000-0000-0000-0000-0000000000e6', 'contacts', (array[10,12,8,11,9])[i], now() - make_interval(days => i)
+    from generate_series(1, 5) i;
+insert into public.shifts (id, request_id, venue_id, spg_id, shift_date, planned_start, planned_end) values
+  ('sk_now', 'r_kpi', 'v_tp', '00000000-0000-0000-0000-0000000000e7', public.wib(now())::date, '00:00', '23:59'),
+  ('sk_hi',  'r_kpi', 'v_tp', '00000000-0000-0000-0000-0000000000e6', public.wib(now())::date, '00:00', '23:59');
+insert into public.attendances (id, shift_id, user_id, clock_in_at, clock_in_lat, clock_in_lng, geo_valid) values
+  ('ak_now', 'sk_now', '00000000-0000-0000-0000-0000000000e7', now() - interval '1 hour', -7.2625, 112.7389, true),
+  ('ak_hi',  'sk_hi',  '00000000-0000-0000-0000-0000000000e6', now() - interval '1 hour', -7.2625, 112.7389, true);
+set session_replication_role = origin;
+select tests.as_user('00000000-0000-0000-0000-0000000000e7');
+set role authenticated;
+insert into public.kpi_logs (id, shift_id, spg_id, field_key, value, logged_at)
+  values ('kk_now', 'sk_now', '00000000-0000-0000-0000-0000000000e7', 'contacts', 25, now());
+reset role;
+select tests.ok(not exists (select 1 from public.exceptions where shift_id = 'sk_now' and type = 'kpi_outlier'),
+                'KPI below 3x the 7-day median is not flagged');
+select tests.as_user('00000000-0000-0000-0000-0000000000e6');
+set role authenticated;
+insert into public.kpi_logs (id, shift_id, spg_id, field_key, value, logged_at)
+  values ('kk_hi', 'sk_hi', '00000000-0000-0000-0000-0000000000e6', 'contacts', 40, now());
+reset role;
+select tests.ok(exists (select 1 from public.exceptions where shift_id = 'sk_hi' and type = 'kpi_outlier' and status = 'open'),
+                'KPI total at 3x the 7-day median opens a kpi_outlier exception');
+select tests.ok(exists (select 1 from public.exceptions where shift_id = 'sk_hi' and type = 'kpi_outlier' and detail like 'contacts = 40, median 7 hari %(% shift)'),
+                'outlier detail names the median it was compared with');
+
 \echo 'ALL SMOKE CHECKS PASSED'

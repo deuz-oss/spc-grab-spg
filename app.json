@@ -22,7 +22,7 @@
     "android": {
       "package": "com.spc.grabspg",
       "adaptiveIcon": {
-        "backgroundColor": "#0B1B3A",
+        "backgroundColor": "#0F2233",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
