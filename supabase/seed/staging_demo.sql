@@ -45,24 +45,24 @@ insert into auth.users (instance_id, id, aud, role, email, encrypted_password, e
   raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
 values ('00000000-0000-0000-0000-000000000000', 'de000000-0000-0000-0000-000000000004', 'authenticated', 'authenticated', 'demo.coord@internal.spc',
   extensions.crypt('<PASSWORD_demo.coord>', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
-  '{"username": "demo.coord", "name": "Demo Koordinator Surabaya"}', now(), now(), '', '', '', '')
+  '{"username": "demo.coord", "name": "Demo Koordinator Jakarta"}', now(), now(), '', '', '', '')
 on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('de000000-0000-0000-0000-000000000004', 'de000000-0000-0000-0000-000000000004', '{"sub": "de000000-0000-0000-0000-000000000004", "email": "demo.coord@internal.spc", "email_verified": true}', 'email', now(), now(), now())
 on conflict do nothing;
-update public.profiles set role = 'coordinator', active = true, city_id = 'kota-surabaya', grade = 'A', contract_type = 'pkwt',
+update public.profiles set role = 'coordinator', active = true, city_id = 'jakarta', grade = 'A', contract_type = 'pkwt',
   documents_ok = true, phone_ok = true,
   bpjs_registered = true where id = 'de000000-0000-0000-0000-000000000004';
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
   raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
 values ('00000000-0000-0000-0000-000000000000', 'de000000-0000-0000-0000-000000000005', 'authenticated', 'authenticated', 'demo.spg@internal.spc',
   extensions.crypt('<PASSWORD_demo.spg>', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
-  '{"username": "demo.spg", "name": "Demo SPG Surabaya"}', now(), now(), '', '', '', '')
+  '{"username": "demo.spg", "name": "Demo SPG Jakarta"}', now(), now(), '', '', '', '')
 on conflict (id) do nothing;
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
 values ('de000000-0000-0000-0000-000000000005', 'de000000-0000-0000-0000-000000000005', '{"sub": "de000000-0000-0000-0000-000000000005", "email": "demo.spg@internal.spc", "email_verified": true}', 'email', now(), now(), now())
 on conflict do nothing;
-update public.profiles set role = 'spg', active = true, city_id = 'kota-surabaya', grade = 'B', contract_type = 'daily_worker',
+update public.profiles set role = 'spg', active = true, city_id = 'jakarta', grade = 'B', contract_type = 'daily_worker',
   documents_ok = true, phone_ok = true,
   bpjs_registered = true where id = 'de000000-0000-0000-0000-000000000005';
 insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
