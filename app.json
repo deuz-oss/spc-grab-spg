@@ -2,6 +2,7 @@
   "expo": {
     "name": "SPC Grab SPG",
     "slug": "spc-grab-spg",
+    "owner": "deuz-osss-team",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -59,6 +60,11 @@
           "photosPermission": false
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8ed91f22-ae6c-4159-be66-cffdaafb7fdc"
+      }
+    }
   }
 }

@@ -15,7 +15,7 @@ loop: **request → schedule → geotag clock-in → KPI → server checks → P
 | Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 85 smoke checks pass on Postgres 16 |
 | Foundation: app scaffold | 13–17 Oct | ✅ login, SPG today (selfie clock-in, KPI, clock-out, offline queue), PIC/Grab today (exception queue, validation), profile — tsc, lint, 56 unit tests, web bundle green |
 | Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9–11 Oct | ✅ migrations `0001`–`0012` applied (the retention purge was pasted in the SQL Editor). All 5 cron jobs live (no-shows, auto-close, daily report, request status, retention). Schema checked object by object against the repo on 11 Oct: identical apart from comments. Edge function `admin-users` v2. Demo data from `supabase/seed/staging_demo.sql` (6 accounts, one per role) |
-| Foundation: Android dev build on a real phone | 13–17 Oct | ⬜ needs EAS project |
+| Foundation: Android dev build on a real phone | 13–17 Oct | 🟡 EAS project `@deuz-osss-team/spc-grab-spg` linked 15 Oct; first preview APK not yet built |
 | Core loop screens | 19–24 Oct | ✅ built 9 Oct — requests & roster, scheduling with grade/training checks, replacements, live map, consent, daily report publish, CSV exports (attendance, payroll, billing), SPG onboarding, venues, campaigns, accounts. Verified on staging via SQL as each role and in a mocked-backend browser run; not yet on a real phone |
 | Reports, payroll export, pilot (5 SPG) | 26–30 Oct | ⬜ |
 | Go-live: first Grab request | 2 Nov | ⬜ |
@@ -121,7 +121,7 @@ publishable key themselves (public values; access control is RLS). Production ge
 ```bash
 npm i -g eas-cli
 eas login                      # SPC's Expo account
-eas init                       # once: links the project, writes extra.eas.projectId into app.json — commit it
+eas init                       # done 15 Oct 2026: owner deuz-osss-team, extra.eas.projectId in app.json
 eas build -p android --profile preview      # installable APK for the 5-SPG pilot (staging backend)
 eas build -p android --profile development  # dev client, only if debugging on the phone
 ```
