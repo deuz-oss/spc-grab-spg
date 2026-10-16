@@ -11,7 +11,9 @@
       },
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://irsgynzhdlwnbvcjynqf.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_cp9fm3xRI7dDi8lAwcLssQ_-O9xDZLc"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_cp9fm3xRI7dDi8lAwcLssQ_-O9xDZLc",
+        "EXPO_PUBLIC_MAP_TILE_URL": "https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=gwiUXOLIGByADoclvURt",
+        "EXPO_PUBLIC_MAP_TILE_ATTRIBUTION": "&copy; MapTiler &copy; OpenStreetMap contributors"
       }
     },
     "preview": {
@@ -22,7 +24,9 @@
       },
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://irsgynzhdlwnbvcjynqf.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_cp9fm3xRI7dDi8lAwcLssQ_-O9xDZLc"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_cp9fm3xRI7dDi8lAwcLssQ_-O9xDZLc",
+        "EXPO_PUBLIC_MAP_TILE_URL": "https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=gwiUXOLIGByADoclvURt",
+        "EXPO_PUBLIC_MAP_TILE_ATTRIBUTION": "&copy; MapTiler &copy; OpenStreetMap contributors"
       }
     },
     "production-apk": {

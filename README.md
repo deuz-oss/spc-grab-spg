@@ -118,6 +118,9 @@ $job$);
 
 `.env` is not uploaded to EAS, so the `development` and `preview` profiles in `eas.json` carry the staging URL and
 publishable key themselves (public values; access control is RLS). Production gets its own project and keys.
+They also carry the map tiles (decision D4): MapTiler `streets-v2` with SPC's key, a public value like the
+publishable key. OpenStreetMap's own tile servers answer 403 "Access blocked" to the map (the Leaflet page sends no
+Referer), seen on 16 Oct; for local web runs put the same two `EXPO_PUBLIC_MAP_TILE_*` lines in `.env`.
 
 ```bash
 npm i -g eas-cli
@@ -142,8 +145,9 @@ older phone without them.
 
 - Edge function `purge-media` deployed to staging 11 Oct 2026 (version 1, source identical to `main`) but **not yet scheduled** — needs the service key in Vault (see "Retention" below).
 - Billing lines per month (P2), Grab self-service request form (P2). KPI outlier rule done in `0012` (3x the 7-day median, at least 5 shifts to compare).
-- Inherited from the reference: iOS background location unvalidated, EAS production build never run, push unverified,
-  map tiles must move to a keyed provider before go-live.
+- Inherited from the reference: iOS background location unvalidated, EAS production build never run, push unverified.
+- Map tiles: MapTiler key in the staging profiles since 16 Oct. Before go-live: check MapTiler's plan terms for
+  commercial use and the monthly tile quota against the expected PIC/Grab map use, and give production its own key.
 - `assets/` icons are the programme's own (amber shift pass on ink, 15 Oct; generator kept outside the repo). Swap for SPC brand artwork if SPC has one — same filenames and sizes.
 - `src/lib/database.types.ts` is generated from staging; regenerate after every migration.
 - The Supabase MCP connector refuses SQL containing DELETE: such migrations are pasted into the SQL Editor (as done for the retention purge).
