@@ -1,11 +1,12 @@
 /**
  * Live-map status helpers (pure — unit-tested in plain Node).
  *
- * A background GPS point arrives roughly every 15-30 s while an NC is moving
- * (TRACK_INTERVAL_MS / TRACK_MIN_STEP_M), but none arrive while they stand
- * still, and Android may throttle the task. So "stale" is deliberately
- * generous: only after STALE_AFTER_MIN without any update do we warn that the
- * position may be outdated (phone off, GPS disabled, app killed).
+ * A background GPS point arrives roughly every 15-30 s while an SPG is moving
+ * (TRACK_INTERVAL_MS / TRACK_MIN_STEP_M) and at least every TRACK_HEARTBEAT_MS
+ * (5 min) while they stand still, but Android may throttle the task. So
+ * "stale" allows a couple of missed heartbeats: only after STALE_AFTER_MIN
+ * without any update do we warn that the position may be outdated (phone off,
+ * GPS disabled, app killed).
  */
 export const STALE_AFTER_MIN = 15;
 

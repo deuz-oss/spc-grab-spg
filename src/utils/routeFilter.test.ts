@@ -18,6 +18,19 @@ describe('selectNewPoints', () => {
     assert.deepEqual(kept.map((x) => x.t), [2000]);
   });
 
+  it('standing still: keeps a heartbeat point once the heartbeat interval has passed (B4)', () => {
+    const MIN = 60000;
+    // fixes every 15 s for 11 min, all within 1 m of the booth
+    const batch = Array.from({ length: 44 }, (_, i) => p(-6.0 - (i % 2) * 0.000005, (i + 1) * 15000));
+    const { kept } = selectNewPoints(p(-6.0, 0), batch, 8, 5 * MIN);
+    assert.deepEqual(kept.map((x) => x.t), [5 * MIN, 10 * MIN]);
+  });
+
+  it('without a heartbeat, standing still keeps nothing', () => {
+    const { kept } = selectNewPoints(p(-6.0, 0), [p(-6.000005, 10 * 60000)], 8);
+    assert.deepEqual(kept, []);
+  });
+
   it('ignores fixes not newer than the last kept one (re-delivered batches)', () => {
     const { kept, last } = selectNewPoints(p(-6.0, 5000), [p(-6.01, 4000), p(-6.02, 5000)], 8);
     assert.deepEqual(kept, []);

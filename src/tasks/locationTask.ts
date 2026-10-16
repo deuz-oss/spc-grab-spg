@@ -1,6 +1,6 @@
 import * as TaskManager from 'expo-task-manager';
 import type * as Location from 'expo-location';
-import { TRACK_MIN_STEP_M } from '../config';
+import { TRACK_HEARTBEAT_MS, TRACK_MIN_STEP_M } from '../config';
 import { recordLocations } from '../utils/routeBuffer';
 import { flushRouteBuffer } from '../utils/routeSync';
 
@@ -24,6 +24,7 @@ export async function handleLocations(
   const userId = await recordLocations(
     real.map((l) => ({ lat: l.coords.latitude, lng: l.coords.longitude, t: Math.round(l.timestamp) })),
     TRACK_MIN_STEP_M,
+    TRACK_HEARTBEAT_MS,
   );
   if (userId) await flushRouteBuffer(userId);
 }

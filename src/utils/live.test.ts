@@ -30,3 +30,11 @@ describe('agoLabel', () => {
     assert.equal(agoLabel(NOW + 30 * 1000, NOW), 'baru saja');
   });
 });
+
+describe('heartbeat vs stale', () => {
+  it('an SPG standing still sends heartbeats often enough never to look stale', async () => {
+    const { TRACK_HEARTBEAT_MS } = await import('../config');
+    // at least two heartbeats may be missed (Android throttling) before the map says "Tidak ada update"
+    assert.ok(TRACK_HEARTBEAT_MS * 3 <= STALE_AFTER_MIN * MIN, `heartbeat ${TRACK_HEARTBEAT_MS / MIN} min vs stale ${STALE_AFTER_MIN} min`);
+  });
+});
