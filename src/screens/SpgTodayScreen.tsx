@@ -10,6 +10,7 @@ import { useNow } from '../components/useNow';
 import { venueFence } from '../utils/geo';
 import { LocationPermissionDeniedError, requestCurrentCoords, type Coords } from '../utils/location';
 import { programDayKey } from '../utils/period';
+import { todayShifts } from '../utils/todayShifts';
 import { fmtDayLong, fmtDayShort, fmtDurShort, fmtTime } from '../utils/format';
 import { C, ELEV, F, SP, T, TOUCH } from '../theme';
 import type { Attendance, Campaign, KpiField, Shift, Venue } from '../types';
@@ -313,11 +314,7 @@ export default function SpgTodayScreen() {
   const { shifts, venues, campaigns, requests, attendances, refresh } = useStore();
   const [refreshing, setRefreshing] = useState(false);
   const today = programDayKey(useNow());
-  const mine = useMemo(
-    () => shifts.filter((s) => s.spgId === me?.id && s.shiftDate === today && s.status !== 'cancelled' && s.status !== 'replaced')
-      .sort((a, b) => a.plannedStart.localeCompare(b.plannedStart)),
-    [shifts, me?.id, today],
-  );
+  const mine = useMemo(() => todayShifts(shifts, attendances, me?.id, today), [shifts, attendances, me?.id, today]);
   const next = useMemo(
     () => shifts.filter((s) => s.spgId === me?.id && s.shiftDate > today && s.status === 'planned')
       .sort((a, b) => (a.shiftDate + a.plannedStart).localeCompare(b.shiftDate + b.plannedStart))[0],
