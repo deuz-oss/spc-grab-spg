@@ -6,6 +6,9 @@ export const APP_NAME = 'SPC Grab SPG';
 export const TRACK_MIN_STEP_M = 8;
 /** Minimum interval between GPS updates while a shift is running (ms). */
 export const TRACK_INTERVAL_MS = 15000;
+/** Keep a point at least this often even when standing still (ms), so the live map's 15-min "Tidak ada update"
+ * only means phone off / GPS off / no signal (B4, phone test 16 Oct). */
+export const TRACK_HEARTBEAT_MS = 5 * 60000;
 
 /** Field history loaded at login (days) — today, the week, and last month's recap. */
 export const HISTORY_DAYS = 45;

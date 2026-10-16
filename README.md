@@ -69,7 +69,7 @@ npx expo start            # w = web; Android/iOS background GPS needs a dev clie
 
 | Role | Tab "Hari Ini" |
 |---|---|
-| SPG / coordinator | Today's shifts (plus any earlier shift still clocked in, on top, so a forgotten clock-out can still be done) → clock-in with front-camera selfie and a geofence preview → KPI per campaign field (camera proof when required, no customer data) → clock-out. Works without signal: writes queue in order and photos upload at replay. Background GPS runs while a shift is open |
+| SPG / coordinator | Today's shifts (plus any earlier shift still clocked in, on top, so a forgotten clock-out can still be done) → clock-in with front-camera selfie and a geofence preview → KPI per campaign field (camera proof when required, no customer data) → clock-out. Works without signal: writes queue in order and photos upload at replay. Background GPS runs while a shift is open: a point every ~15 s on the move (8 m steps) and at least every 5 min standing still, so the live map's "Tidak ada update" (15 min) means phone off, GPS off or no signal |
 | PIC / super admin | Today's numbers, open exceptions with a required note to resolve or waive, finished shifts ready to validate |
 | Back office / Grab | Same view, read-only |
 
@@ -77,7 +77,7 @@ Reused unchanged from `spc-nc-workforce`: UI kit, dialogs, theme, offline replay
 location task, tracking watcher, offline snapshot, error reporting. Rewritten for Grab: types, store, mappers,
 storage (private `selfies` / `kpi-proof` buckets), geofence helper, screens.
 
-Checks: `npm run typecheck`, `npm run lint`, `npm test` (94 unit tests, including the edge-function logic), `npm run test:db` (88 database checks).
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (97 unit tests, including the edge-function logic), `npm run test:db` (88 database checks).
 CI runs all of them plus Expo doctor and a web bundle on every push.
 
 Tabs per role: SPG/coordinator — Hari Ini, Jadwal (coordinator also Peta), Profil, after a one-time UU PDP consent.

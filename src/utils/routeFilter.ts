@@ -13,18 +13,21 @@ export interface RoutePointInput {
 /**
  * Pure: the points from one location batch worth keeping — in time order,
  * newer than the last kept point, and at least `minStepM` away from the
- * previously kept one (standing still doesn't add points).
+ * previously kept one — or `heartbeatMs` after it, so an SPG standing still
+ * at the booth still sends a point now and then. Without the heartbeat the
+ * live map showed a working SPG as "Tidak ada update" after 15 min (B4).
  */
 export function selectNewPoints(
   last: RoutePointInput | null,
   batch: RoutePointInput[],
   minStepM: number,
+  heartbeatMs = Infinity,
 ): { kept: RoutePointInput[]; last: RoutePointInput | null } {
   const kept: RoutePointInput[] = [];
   let prev = last;
   for (const p of [...batch].sort((a, b) => a.t - b.t)) {
     if (prev && p.t <= prev.t) continue;
-    if (prev && haversineM(prev, p) < minStepM) continue;
+    if (prev && haversineM(prev, p) < minStepM && p.t - prev.t < heartbeatMs) continue;
     kept.push(p);
     prev = p;
   }

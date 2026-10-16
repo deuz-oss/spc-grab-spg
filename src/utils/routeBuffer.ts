@@ -96,11 +96,11 @@ export function onPointsRecorded(fn: RecordedListener): () => void {
 
 /** Buffers the worthwhile points of one location batch for the tracked
  * session. Returns the tracked user (null when nothing is being tracked). */
-export function recordLocations(batch: RoutePointInput[], minStepM: number): Promise<string | null> {
+export function recordLocations(batch: RoutePointInput[], minStepM: number, heartbeatMs?: number): Promise<string | null> {
   return withLock(async () => {
     const ctx = await getTrackingContext();
     if (!ctx) return null;
-    const { kept, last } = selectNewPoints(ctx.last, batch, minStepM);
+    const { kept, last } = selectNewPoints(ctx.last, batch, minStepM, heartbeatMs);
     if (!kept.length) return ctx.userId;
     const points: BufferedPoint[] = kept.map((p) => ({ ...p, attendanceId: ctx.attendanceId }));
     const buffer = await readJson<BufferedPoint[]>(bufferKey(ctx.userId), []);

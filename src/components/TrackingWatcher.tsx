@@ -65,7 +65,7 @@ export function TrackingWatcher() {
 
       if (Platform.OS === 'web') {
         sub = await Location.watchPositionAsync(
-          { accuracy: Location.Accuracy.Balanced, timeInterval: TRACK_INTERVAL_MS, distanceInterval: 10 },
+          { accuracy: Location.Accuracy.Balanced, timeInterval: TRACK_INTERVAL_MS, distanceInterval: 0 },
           (pos) => void handleLocations([pos]),
         );
         if (cancelled) sub.remove(); // unmounted while the watcher was starting
@@ -80,10 +80,12 @@ export function TrackingWatcher() {
         await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
       }
       if (cancelled) return;
+      // distanceInterval 0: fixes keep coming while the SPG stands still; the buffer keeps one per
+      // TRACK_HEARTBEAT_MS then (routeFilter.ts), so the live map can tell "at the booth" from "phone off".
       await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
         accuracy: Location.Accuracy.Balanced,
         timeInterval: TRACK_INTERVAL_MS,
-        distanceInterval: 10,
+        distanceInterval: 0,
         foregroundService: {
           notificationTitle: 'SPC Grab SPG',
           notificationBody: 'Merekam rute perjalanan selama shift berjalan.',
