@@ -459,4 +459,20 @@ select tests.as_user(null);
 select tests.fails($$update public.attendances set accuracy_m = -1 where id = 'aa_acc'$$,
                    'attendances_accuracy_m_check', 'clock-in accuracy cannot be negative');
 
+-- ---------------------------------------------------------------- field users read their own requests (migration 0014)
+-- spg8 has a shift on r_kpi only; spg1 on r1 only
+select tests.as_user('00000000-0000-0000-0000-0000000000e8');
+set role authenticated;
+select tests.ok((select campaign_id from public.requests where id = 'r_kpi') = 'c_food',
+                'SPG reads the request behind their own shift (campaign for the KPI card)');
+select tests.ok(not exists (select 1 from public.requests where id = 'r1'),
+                'SPG does not read a request they have no shift on');
+reset role;
+select tests.as_user('00000000-0000-0000-0000-0000000000e1');
+set role authenticated;
+select tests.ok(exists (select 1 from public.requests where id = 'r1') and not exists (select 1 from public.requests where id = 'r_kpi'),
+                'another SPG sees only their own request');
+reset role;
+select tests.as_user(null);
+
 \echo 'ALL SMOKE CHECKS PASSED'
