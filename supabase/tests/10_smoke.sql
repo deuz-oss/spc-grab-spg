@@ -260,6 +260,8 @@ select tests.as_user('00000000-0000-0000-0000-0000000000b1');
 set role authenticated;
 select tests.fails($$select public.resolve_exception((select id from public.exceptions where shift_id='s1' and type='late'), 'waived', ' ')$$,
                    'Catatan wajib', 'resolving needs a note');
+select tests.fails($$select public.resolve_exception((select id from public.exceptions where shift_id='s1' and type='late'), 'waived', '  ada  ')$$,
+                   'minimal 10 karakter', 'a note of a few letters is refused (min 10 characters)');
 select public.resolve_exception(id, 'resolved', 'Checked by phone with SPG; venue entrance moved')
   from public.exceptions where shift_id = 's1' and status = 'open';
 select public.validate_shift('s1');
@@ -387,7 +389,7 @@ select tests.fails($$insert into public.attendances (id, shift_id, user_id, cloc
 reset role;
 select tests.as_user('00000000-0000-0000-0000-0000000000b1');
 set role authenticated;
-select tests.fails($$select public.resolve_exception((select id from public.exceptions where shift_id = 's1' and type = 'late'), 'waived', 'again')$$,
+select tests.fails($$select public.resolve_exception((select id from public.exceptions where shift_id = 's1' and type = 'late'), 'waived', 'second look by PIC')$$,
                    'sudah ditutup', 'resolving an already-closed exception says so');
 reset role;
 

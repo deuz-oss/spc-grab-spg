@@ -936,6 +936,7 @@ export type Database = {
       current_city_id: { Args: never; Returns: string }
       current_role: { Args: never; Returns: string }
       detect_no_shows: { Args: never; Returns: number }
+      exception_note_min_length: { Args: never; Returns: number }
       grade_rank: { Args: { p: string }; Returns: number }
       haversine_m: {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
