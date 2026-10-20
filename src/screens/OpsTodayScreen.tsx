@@ -7,6 +7,7 @@ import { useCurrentUser, useStore } from '../store/useStore';
 import { useNow } from '../components/useNow';
 import { EXCEPTION_LABEL, OPS_ROLES } from '../config';
 import { programDayKey } from '../utils/period';
+import { exceptionNoteProblem } from '../utils/exceptionNote';
 import { fmtDayLong, fmtDayShort, fmtTime } from '../utils/format';
 import { C, R, SP, T } from '../theme';
 import type { ExceptionType, ShiftException } from '../types';
@@ -56,6 +57,11 @@ export default function OpsTodayScreen() {
   };
 
   const resolve = async (e: ShiftException, status: 'resolved' | 'waived') => {
+    const problem = exceptionNoteProblem(notes[e.id]);
+    if (problem) {
+      showDialog('Catatan terlalu singkat', problem);
+      return;
+    }
     setBusy(`${e.id}-${status}`);
     try {
       await s.resolveException(e.id, status, notes[e.id] ?? '');
@@ -136,7 +142,7 @@ export default function OpsTodayScreen() {
               {isOps && (
                 <>
                   <Input
-                    placeholder="Catatan wajib: apa yang dicek dan hasilnya"
+                    placeholder="Catatan wajib (min. 10 karakter): apa yang dicek dan hasilnya"
                     accessibilityLabel={`Catatan untuk exception ${EXCEPTION_LABEL[e.type]} ${w.name} (wajib)`}
                     value={notes[e.id] ?? ''}
                     onChangeText={(t) => setNotes({ ...notes, [e.id]: t })}

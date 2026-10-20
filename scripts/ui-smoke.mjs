@@ -99,7 +99,7 @@ for (const t of tabs) {
     await shot('request-detail');
     console.log('DETAIL:', (await p.innerText('body')).replace(/\s+/g, ' ').slice(400, 1300));
     if (role === 'pic') {
-      await p.getByText(/^10-1\d \(0\/2\)$/).last().click();
+      await p.getByText(new RegExp(`^${tomorrow.slice(5)} \\(0/2\\)$`)).last().click(); // tomorrow's chip, e.g. "10-21 (0/2)"
       await p.getByText('Sari Wulandari · Grade B').last().click();
       await p.getByText(/^Jadwalkan 1 shift$/).last().click();
       await p.waitForTimeout(1500);

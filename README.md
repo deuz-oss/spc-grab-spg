@@ -12,9 +12,9 @@ loop: **request → schedule → geotag clock-in → KPI → server checks → P
 | Phase (spec) | Dates | State |
 |---|---|---|
 | Spec approval | 10–12 Oct | ✅ approved 9 Oct |
-| Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 91 smoke checks pass on Postgres 16 |
+| Foundation: backend | 13–17 Oct | ✅ schema, RLS, server rules, jobs — 92 smoke checks pass on Postgres 16 |
 | Foundation: app scaffold | 13–17 Oct | ✅ login, SPG today (selfie clock-in, KPI, clock-out, offline queue), PIC/Grab today (exception queue, validation), profile — tsc, lint, 56 unit tests, web bundle green |
-| Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9–11 Oct | ✅ migrations `0001`–`0014` applied (the retention purge was pasted in the SQL Editor). All 5 cron jobs live (no-shows, auto-close, daily report, request status, retention). Schema checked object by object against the repo on 11 Oct: identical apart from comments. Edge function `admin-users` v2. Demo data from `supabase/seed/staging_demo.sql` (6 accounts, one per role) |
+| Supabase staging (`irsgynzhdlwnbvcjynqf`, Singapore, free plan) | 9–11 Oct | ✅ migrations `0001`–`0015` applied (the retention purge was pasted in the SQL Editor). All 5 cron jobs live (no-shows, auto-close, daily report, request status, retention). Schema checked object by object against the repo on 11 Oct: identical apart from comments. Edge function `admin-users` v2. Demo data from `supabase/seed/staging_demo.sql` (6 accounts, one per role) |
 | Foundation: Android dev build on a real phone | 13–17 Oct | 🟡 EAS project `@deuz-osss-team/spc-grab-spg` linked 15 Oct. First preview APK (versionCode 1) on a Galaxy S24 Ultra, Android 16: login, consent, selfie clock-in, server geofence/off-site OK; crashed on the first background GPS fix (missing `RECEIVE_BOOT_COMPLETED`, fixed in the next build) |
 | Core loop screens | 19–24 Oct | ✅ built 9 Oct — requests & roster, scheduling with grade/training checks, replacements, live map, consent, daily report publish, CSV exports (attendance, payroll, billing), SPG onboarding, venues, campaigns, accounts. Verified on staging via SQL as each role and in a mocked-backend browser run; not yet on a real phone |
 | Reports, payroll export, pilot (5 SPG) | 26–30 Oct | ⬜ |
@@ -39,6 +39,7 @@ Migrations in `supabase/migrations/`, applied in filename order to a Supabase pr
 | `0012_kpi_outlier.sql` | KPI outlier: a shift total at 3x or more the 7-day median of the same campaign field (at least 5 shifts to compare) opens a `kpi_outlier` exception, which blocks billing until the PIC resolves or waives it. Applied to staging 15 Oct 2026 |
 | `0013_clock_in_accuracy.sql` | Clock-in GPS accuracy from the phone (bug B1, phone test 15 Oct): never negative, fixed once written like the rest of the clock-in, and named in the off-site exception ("Jarak 15164 m dari venue (akurasi ±2000 m)") so the PIC can tell a bad fix from an SPG away from the venue. Geofence rules unchanged. Applied to staging 15 Oct 2026 |
 | `0014_field_read_own_requests.sql` | SPG and coordinators read the requests behind their own shifts (bug B6, phone test 18 Oct): the app finds a shift's campaign through its request, so without it the SPG had no KPI card at all. A second read policy, `requests_read` unchanged; no other request is visible. Request notes are visible to the SPG on that request — keep internal remarks out of them. Applied to staging 18 Oct 2026 |
+| `0015_exception_note_min_length.sql` | Closing an exception needs a note of at least 10 characters (bug B7, phone test 20 Oct: three exceptions closed with "ada"); the note is the audit trail behind a billed shift. Applied to staging 20 Oct 2026 |
 | `0005_hardening.sql` | From the Supabase security advisor: signed-out callers execute no function, trigger functions are not callable over the API, fixed `search_path` everywhere |
 
 Rules that live in the database, not the phone:
@@ -72,14 +73,14 @@ npx expo start            # w = web; Android/iOS background GPS needs a dev clie
 | Role | Tab "Hari Ini" |
 |---|---|
 | SPG / coordinator | Today's shifts (plus any earlier shift still clocked in, on top, so a forgotten clock-out can still be done) → clock-in with front-camera selfie and a geofence preview → KPI per campaign field (camera proof when required, no customer data) → clock-out. Works without signal: writes queue in order and photos upload at replay. Background GPS runs while a shift is open: a point every ~15 s on the move (8 m steps) and at least every 5 min standing still, so the live map's "Tidak ada update" (15 min) means phone off, GPS off or no signal |
-| PIC / super admin | Today's numbers, open exceptions with a required note to resolve or waive, finished shifts ready to validate |
+| PIC / super admin | Today's numbers, open exceptions with a required note (at least 10 characters) to resolve or waive, finished shifts ready to validate |
 | Back office / Grab | Same view, read-only |
 
 Reused unchanged from `spc-nc-workforce`: UI kit, dialogs, theme, offline replay rules, route buffer and sync, background
 location task, tracking watcher, offline snapshot, error reporting. Rewritten for Grab: types, store, mappers,
 storage (private `selfies` / `kpi-proof` buckets), geofence helper, screens.
 
-Checks: `npm run typecheck`, `npm run lint`, `npm test` (97 unit tests, including the edge-function logic), `npm run test:db` (91 database checks).
+Checks: `npm run typecheck`, `npm run lint`, `npm test` (99 unit tests, including the edge-function logic), `npm run test:db` (92 database checks).
 CI runs all of them plus Expo doctor and a web bundle on every push.
 
 Tabs per role: SPG/coordinator — Hari Ini, Jadwal (coordinator also Peta), Profil, after a one-time UU PDP consent.

@@ -16,6 +16,8 @@ export const HISTORY_DAYS = 45;
 /** Mirrors the server: late after 15 min, auto-close after 16 h (migrations 0001, 0003). */
 export const LATE_THRESHOLD_MIN = 15;
 export const AUTO_CLOSE_ATTENDANCE_HOURS = 16;
+/** Mirrors the server (migration 0015): a note to close an exception is at least this long, trimmed. */
+export const EXCEPTION_NOTE_MIN_LENGTH = 10;
 
 export const ROLE_LABEL: Record<Role, string> = {
   super_admin: 'Super Admin',
